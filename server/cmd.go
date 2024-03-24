@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"time"
+	"ws-tun-vpn/pkg/address_pool"
 	"ws-tun-vpn/pkg/netutil"
 	"ws-tun-vpn/pkg/util"
 	"ws-tun-vpn/service"
@@ -26,16 +27,16 @@ func main() {
 	config := new(types.ServerConfig)
 	rootCmd.Flags().BoolVar(&config.Verbose, "verbose", false,
 		"Print the verbose.")
-	rootCmd.Flags().BoolVar(&config.EnableTLS, "enable_tls", false,
+	rootCmd.Flags().BoolVar(&config.EnableTLS, "enable-tls", false,
 		"Use TLS to start server.")
-	rootCmd.Flags().StringVar(&config.ListenOn, "listen_on", ":3000",
+	rootCmd.Flags().StringVar(&config.ListenOn, "listen-on", ":3000",
 		"Server listener address.")
 	rootCmd.Flags().UintVar(&config.MTU, "mtu", 1500,
 		"Maximum Transmission Unit.")
 	var cidr string
-	rootCmd.Flags().StringVar(&cidr, "cidr_v4", "10.7.7.0/24",
+	rootCmd.Flags().StringVar(&cidr, "cidr", "10.7.7.0/24",
 		"Classless Inter-Domain Routing of ipv4.")
-	util.ValidateWithFatal(cidr, "required,cidrv4")
+	util.ValidateWithFatal(cidr, "required,cidr")
 	rootCmd.Flags().BoolVar(&config.AutoCert, "auto_cert", false,
 		"Automatically generate a certificate that enables HTTPS server.")
 	rootCmd.Flags().BoolVar(&config.AcmeCert, "acme_cert", false,
@@ -44,20 +45,23 @@ func main() {
 			"This configuration is valid when enable_tls is enabled.")
 	rootCmd.Flags().StringVar(&config.Domain, "domain", "",
 		"The domain name that is bound to the server.")
-	rootCmd.Flags().StringVar(&config.CertificateFile, "certificate_file", "",
+	rootCmd.Flags().StringVar(&config.CertificateFile, "certificate-file", "",
 		"The certificate file that the server is bound to.")
-	rootCmd.Flags().StringVar(&config.PrivateKeyFile, "private_key_file", "",
+	rootCmd.Flags().StringVar(&config.PrivateKeyFile, "private-key-file", "",
 		"The private key file corresponding to the certificate bound to the server.")
-	config.PushRoutes = *rootCmd.Flags().StringArray("push_routes", []string{},
+	config.PushRoutes = *rootCmd.Flags().StringArray("push-routes", []string{},
 		"Routes that are pushed to clients.")
+	rootCmd.Flags().StringVar(&config.AuthCode, "auth-code", "",
+		"The authentication code for the client to connect to the server.")
+	util.ValidateWithFatal(config.AuthCode, "required,ascii,alphanum,uppercase,lowercase")
 	if len(config.PushRoutes) > 0 {
 		for v := range config.PushRoutes {
 			util.ValidateWithFatal(v, "required,cidrv4")
 		}
 	}
 	if config.EnableTLS && !config.AutoCert {
-		util.FlagRequiredWithFatal(rootCmd, "certificate_file")
-		util.FlagRequiredWithFatal(rootCmd, "private_key_file")
+		util.FlagRequiredWithFatal(rootCmd, "certificate-file")
+		util.FlagRequiredWithFatal(rootCmd, "private-key-file")
 	}
 	if config.EnableTLS && config.AutoCert {
 		util.ValidateWithFatal(config.Domain, "required,fqdn")
@@ -68,9 +72,8 @@ func main() {
 	}
 
 	cidrSlice := netutil.GetCidrV4SliceWithFatal(cidr)
-	config.BindIP = cidrSlice[0]
-	config.CIDRBlock = cidrSlice[1:]
-	config.CIDRMask = netutil.GetCidrV4Mask(cidr)
+	config.BindAddress = cidrSlice[0]
+	config.AddressPool = address_pool.NewAddressPool(cidrSlice[1:], netutil.GetCidrV4Mask(cidr))
 	config.Cache = cache.New(30*time.Minute, 10*time.Minute)
 	rootCmd.SetContext(context.WithValue(context.Background(), "config", config))
 	if err := rootCmd.Execute(); err != nil {

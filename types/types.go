@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/patrickmn/go-cache"
+	"ws-tun-vpn/pkg/address_pool"
 	"ws-tun-vpn/pkg/water"
 )
 
@@ -21,9 +22,9 @@ type ServerConfig struct {
 	CertificateFile string
 	PrivateKeyFile  string
 	PushRoutes      []string
-	BindIP          string
-	CIDRBlock       []string
-	CIDRMask        string
+	BindAddress     string
+	AuthCode        string
+	AddressPool     *address_pool.AddressPool
 	Cache           *cache.Cache
 	IFace           *water.Interface
 }

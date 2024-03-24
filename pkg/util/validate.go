@@ -9,7 +9,7 @@ import (
 func ValidateWithFatal(field any, tag string) {
 	err := validate.New().Var(field, tag)
 	if err != nil {
-		// 校验失败，处理错误
+		// 校验失败，处理错误并退出程序
 		log.Fatal(err)
 	}
 }
