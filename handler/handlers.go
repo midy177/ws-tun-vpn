@@ -9,10 +9,12 @@ import (
 	"ws-tun-vpn/logic"
 )
 
+// Handler is a struct that contains the logic of the server.
 type Handler struct {
 	logic *logic.ServerLogic
 }
 
+// NewHandler creates a new Handler instance.
 func NewHandler(ctx context.Context) *Handler {
 	serverLogic, err := logic.NewServerLogic(ctx)
 	if err != nil {

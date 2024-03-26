@@ -13,11 +13,13 @@ import (
 	"ws-tun-vpn/types"
 )
 
+// ServerLogic server logic struct.
 type ServerLogic struct {
 	config *types.ServerConfig
 	iface  net.PacketConn
 }
 
+// NewServerLogic create a new server logic instance.
 func NewServerLogic(ctx context.Context) (*ServerLogic, error) {
 	config, ok := ctx.Value("config").(*types.ServerConfig)
 	if !ok {
@@ -28,6 +30,7 @@ func NewServerLogic(ctx context.Context) (*ServerLogic, error) {
 	}, nil
 }
 
+// ServerTunPacketRouteToClient 监听tun设备收到的数据，并将其转发给客户端
 func (s *ServerLogic) ServerTunPacketRouteToClient() {
 	packet := make([]byte, 0, 2048)
 	for {
@@ -54,6 +57,7 @@ func (s *ServerLogic) Authenticate(authCode string) bool {
 	return s.config.AuthCode == authCode
 }
 
+// HandleConnection 处理客户端连接
 func (s *ServerLogic) HandleConnection(client net.Conn) error {
 	defer client.Close()
 	for {
