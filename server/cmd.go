@@ -58,11 +58,11 @@ func main() {
 	rootCmd.Flags().StringVar(&cidr, "cidr", "10.7.7.0/24",
 		"Classless Inter-Domain Routing of ipv4.")
 	util.ValidateWithFatal(cidr, "required,cidr", "--cidr")
-	rootCmd.Flags().BoolVar(&config.AutoCert, "auto_cert", false,
+	rootCmd.Flags().BoolVar(&config.AutoCert, "auto-cert", false,
 		"Automatically generate a certificate that enables HTTPS server.")
-	rootCmd.Flags().BoolVar(&config.AcmeCert, "acme_cert", false,
+	rootCmd.Flags().BoolVar(&config.AcmeCert, "acme-cert", false,
 		"To use ACME to automatically issue certificates, you need to support public "+
-			"network access on port 80 and configure correct DNS resolution, otherwise self-signature is used. "+
+			"network access on port 80 and configure correct DNS resolution, otherwise self-signature is used."+
 			"This configuration is valid when enable_tls is enabled.")
 	rootCmd.Flags().StringVar(&config.Domain, "domain", "",
 		"The domain name that is bound to the server.")

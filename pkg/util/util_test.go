@@ -6,6 +6,6 @@ import (
 )
 
 func TestUtil(t *testing.T) {
-	name := GenerateTunName(4)
+	name := LenToSubNetMask(27)
 	fmt.Print(name + "\n")
 }

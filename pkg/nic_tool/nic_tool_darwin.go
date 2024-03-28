@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"ws-tun-vpn/pkg/netutil"
+	"ws-tun-vpn/pkg/util"
 )
 
 // set the cidr and up for the tun device,cidr example: 10.0.0.1/24
@@ -15,7 +16,14 @@ func (t *tool) SetCidrAndUp() string {
 	if len(cidrSlice) < 2 {
 		return "invalid cidr"
 	}
-	return execCmd("ifconfig", t.tunName, "inet", strings.Split(t.cidr, "/")[1], cidrSlice[0], "up")
+	//  golang string to int
+	mask, err := strconv.Atoi(strings.Split(t.cidr, "/")[1])
+	if err != nil {
+		return "invalid cidr"
+	}
+	return execCmd("ifconfig", t.tunName, "inet", cidrSlice[0], util.LenToSubNetMask(mask), "up")
+
+	//	return execCmd("ifconfig", t.tunName, "inet", strings.Split(t.cidr, "/")[1], cidrSlice[0], "up")
 }
 
 // set the mtu for the tun device
