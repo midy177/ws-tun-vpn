@@ -15,6 +15,7 @@ import (
 
 // ServerLogic server logic struct.
 type ServerLogic struct {
+	ctx    context.Context
 	config *types.ServerConfig
 	iface  net.PacketConn
 }
@@ -26,6 +27,7 @@ func NewServerLogic(ctx context.Context) (*ServerLogic, error) {
 		return nil, errors.New("failed to get config from context")
 	}
 	return &ServerLogic{
+		ctx:    ctx,
 		config: config,
 	}, nil
 }

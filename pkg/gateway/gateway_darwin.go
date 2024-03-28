@@ -4,7 +4,10 @@
 package gateway
 
 import (
+	"log"
 	"net"
+	"os/exec"
+	"strings"
 )
 
 func discoverGatewayOSSpecificIPv4() (ip net.IP, err error) {
@@ -23,4 +26,17 @@ func discoverGatewayOSSpecificIPv6() (ip net.IP, err error) {
 		return nil, errCantParse
 	}
 	return ipv6, nil
+}
+
+func execCmd(c string, args ...string) string {
+	cmd := exec.Command(c, args...)
+	out, err := cmd.Output()
+	if err != nil {
+		log.Println("failed to exec cmd:", err)
+	}
+	if len(out) == 0 {
+		return ""
+	}
+	s := string(out)
+	return strings.ReplaceAll(s, "\n", "")
 }

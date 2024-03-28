@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"time"
-	"ws-tun-vpn/pkg/address_pool"
+	"ws-tun-vpn/pkg/addr_pool"
 	"ws-tun-vpn/pkg/netutil"
 	"ws-tun-vpn/pkg/util"
 	"ws-tun-vpn/service"
@@ -73,7 +73,7 @@ func main() {
 
 	cidrSlice := netutil.GetCidrV4SliceWithFatal(cidr)
 	config.BindAddress = cidrSlice[0]
-	config.AddressPool = address_pool.NewAddressPool(cidrSlice[1:], netutil.GetCidrV4Mask(cidr))
+	config.AddressPool = addr_pool.NewAddressPool(cidrSlice[1:], netutil.GetCidrV4Mask(cidr))
 	config.Cache = cache.New(30*time.Minute, 10*time.Minute)
 	rootCmd.SetContext(context.WithValue(context.Background(), "config", config))
 	if err := rootCmd.Execute(); err != nil {

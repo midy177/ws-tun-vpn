@@ -1,4 +1,4 @@
-package address_pool
+package addr_pool
 
 import "sync"
 

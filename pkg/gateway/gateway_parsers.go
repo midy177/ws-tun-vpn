@@ -1,9 +1,10 @@
+//go:build windows
+// +build windows
+
 package gateway
 
 import (
-	"log"
 	"net"
-	"os/exec"
 	"strings"
 )
 
@@ -125,17 +126,4 @@ func parseWindowsGatewayIPv6(output []byte) (net.IP, error) {
 		return nil, errCantParse
 	}
 	return ip, nil
-}
-
-func execCmd(c string, args ...string) string {
-	cmd := exec.Command(c, args...)
-	out, err := cmd.Output()
-	if err != nil {
-		log.Println("failed to exec cmd:", err)
-	}
-	if len(out) == 0 {
-		return ""
-	}
-	s := string(out)
-	return strings.ReplaceAll(s, "\n", "")
 }

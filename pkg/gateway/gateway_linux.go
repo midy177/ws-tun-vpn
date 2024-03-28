@@ -24,3 +24,17 @@ func discoverGatewayOSSpecificIPv6() (ip net.IP, err error) {
 	}
 	return ipv6, nil
 }
+
+// execCmd executes a command and returns its output as a string.
+func execCmd(c string, args ...string) string {
+	cmd := exec.Command(c, args...)
+	out, err := cmd.Output()
+	if err != nil {
+		log.Println("failed to exec cmd:", err)
+	}
+	if len(out) == 0 {
+		return ""
+	}
+	s := string(out)
+	return strings.ReplaceAll(s, "\n", "")
+}

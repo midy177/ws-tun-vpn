@@ -1,9 +1,9 @@
 package types
 
 import (
+	"github.com/net-byte/water"
 	"github.com/patrickmn/go-cache"
-	"ws-tun-vpn/pkg/address_pool"
-	"ws-tun-vpn/pkg/water"
+	"ws-tun-vpn/pkg/addr_pool"
 )
 
 type BaseConfig struct {
@@ -24,7 +24,7 @@ type ServerConfig struct {
 	PushRoutes      []string
 	BindAddress     string
 	AuthCode        string
-	AddressPool     *address_pool.AddressPool
+	AddressPool     *addr_pool.AddressPool
 	Cache           *cache.Cache
 	IFace           *water.Interface
 }
