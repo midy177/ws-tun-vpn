@@ -4,7 +4,10 @@
 package gateway
 
 import (
+	"log"
 	"net"
+	"os/exec"
+	"strings"
 )
 
 func discoverGatewayOSSpecificIPv4() (ip net.IP, err error) {

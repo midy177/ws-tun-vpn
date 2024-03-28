@@ -41,3 +41,8 @@ func (a *AddressPool) PutAddressToPool(str string) {
 	defer a.mu.Unlock()
 	a.pool[str] = false
 }
+
+// GetMask get mask
+func (a *AddressPool) GetMask() string {
+	return a.mask
+}

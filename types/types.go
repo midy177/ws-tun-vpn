@@ -10,6 +10,7 @@ type BaseConfig struct {
 	Verbose   bool
 	EnableTLS bool
 	MTU       uint
+	AuthCode  string
 }
 
 type ServerConfig struct {
@@ -23,7 +24,6 @@ type ServerConfig struct {
 	PrivateKeyFile  string
 	PushRoutes      []string
 	BindAddress     string
-	AuthCode        string
 	AddressPool     *addr_pool.AddressPool
 	Cache           *cache.Cache
 	IFace           *water.Interface

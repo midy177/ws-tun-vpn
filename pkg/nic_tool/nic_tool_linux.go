@@ -5,21 +5,29 @@ package nic_tool
 
 import (
 	"strconv"
+	"strings"
 )
 
 // set the cidr for the tun device
-func (t *tool) SetCidrAndUp(tunName, cidr string) string {
-	return execCmd("/sbin/ip", "addr", "add", cidr, "dev", tunName) +
-		"\n" +
-		execCmd("/sbin/ip", "link", "set", "dev", tunName, "up")
+func (t *tool) SetCidrAndUp() string {
+	info := []string{}
+	i1 := execCmd("/sbin/ip", "addr", "add", t.cidr, "dev", t.tunName)
+	if i1 != "" {
+		info = append(info, i1)
+	}
+	i2 := execCmd("/sbin/ip", "link", "set", "dev", t.tunName, "up")
+	if i2 != "" {
+		info = append(info, i2)
+	}
+	return strings.Join(info, "\n")
 }
 
 // set the mtu for the tun device
-func (t *tool) SetMtu(tunName string, mtu int) string {
-	return execCmd("/sbin/ip", "link", "set", "dev", tunName, "mtu", strconv.Itoa(mtu))
+func (t *tool) SetMtu() string {
+	return execCmd("/sbin/ip", "link", "set", "dev", t.tunName, "mtu", strconv.Itoa(t.mtu))
 }
 
 // set the route for the tun device
-func (t *tool) SetRoute(tunName, dst string) string {
-	return execCmd("/sbin/ip", "route", "add", dst, "dev", tunName)
+func (t *tool) SetRoute(cidr string) string {
+	return execCmd("/sbin/ip", "route", "add", t.cidr, "dev", t.tunName)
 }

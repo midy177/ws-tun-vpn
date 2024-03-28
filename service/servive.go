@@ -2,52 +2,71 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"github.com/sirupsen/logrus"
-	"os"
-	"time"
+	"github.com/net-byte/water"
+	"io"
+	"log"
+	"net/http"
+	"runtime"
+	"ws-tun-vpn/handler"
+	"ws-tun-vpn/logic"
+	"ws-tun-vpn/pkg/util"
 	"ws-tun-vpn/types"
 )
 
 func NewServerService(ctx context.Context) error {
-	if cfg, ok := ctx.Value("config").(*types.ServerConfig); ok {
-		fmt.Printf("%v\n", cfg.Verbose)
-		// Todo run service ....
-		fmt.Println("run hugo...")
+	config, ok := ctx.Value("config").(*types.ServerConfig)
+	if !ok {
+		log.Fatalln("config not found in context")
 	}
-	go func(ctx context.Context) {
-		<-ctx.Done()
-		os.Exit(0)
-	}(ctx)
-	//checkCertificateStatusLogic := logic.NewCheckCertificateStatusLogic(svcCtx)
-	//logrus.Infof("Start running the scheduled check certificate and private key task.")
-	ticker := time.NewTicker(time.Second)
-	for range ticker.C {
-		logrus.Infof("Start task.")
-		//checkCertificateStatusLogic.StartCheck()
-		ticker.Reset(time.Hour * 6)
-		logrus.Infof("The current inspection task is completed.")
+	wc := water.Config{DeviceType: water.TUN}
+	wc.PlatformSpecificParams = water.PlatformSpecificParams{}
+	os := runtime.GOOS
+	wc.PlatformSpecificParams.Name = util.GenerateTunName(4)
+	if os == "windows" {
+		wc.PlatformSpecificParams.Network = []string{config.BindAddress + "/" + config.AddressPool.GetMask()}
 	}
-	return nil
+	iFace, err := water.New(wc)
+	if err != nil {
+		return err
+	}
+	config.IFace = iFace
+	handler.RegisterHandlers(ctx)
+	http.HandleFunc("/health", func(w http.ResponseWriter, req *http.Request) {
+		_, _ = io.WriteString(w, "ok")
+	})
+	//eg := errgroup.Group{}
+	log.Printf("vtun websocket server started on: %v", config.ListenOn)
+	//if config.EnableTLS && !config.AutoCert && !config.AcmeCert {
+	//	if config.EnableTLS && config.AutoCert && !config.AcmeCert {
+	//	}
+	//	if config.EnableTLS && config.AutoCert && config.AcmeCert {
+	//		// 设置 autocert.Manager，用于管理证书
+	//		m := &autocert.Manager{
+	//			Prompt:     autocert.AcceptTOS,
+	//			HostPolicy: autocert.HostWhitelist(config.Domain),
+	//			Cache:      autocert.DirCache("certs"), // 存储证书的缓存目录
+	//		}
+	//		m.TLSConfig()
+	//		eg.Go(func() error {
+	//			log.Println("Make sure that port 80 can be accessed through each bound IP address to obtain the automatically issued certificate.")
+	//			return http.ListenAndServe(":80", nil)
+	//		})
+	//	}
+	//	eg.Go(func() error {
+	//		return http.ListenAndServeTLS(config.ListenOn, config.CertificateFile, config.PrivateKeyFile, nil)
+	//	})
+	//} else {
+	//	eg.Go(func() error {
+	//		return http.ListenAndServe(config.ListenOn, nil)
+	//	})
+	//}
+	return http.ListenAndServe(config.ListenOn, nil)
 }
 func NewClientService(ctx context.Context) error {
-	if cfg, ok := ctx.Value("config").(*types.ClientConfig); ok {
-		fmt.Printf("%v\n", cfg.Verbose)
-		// Todo run service ....
-		fmt.Println("run hugo...")
+	clientLogic, err := logic.NewClientLogic(ctx)
+	if err != nil {
+		return err
 	}
-	go func(ctx context.Context) {
-		<-ctx.Done()
-		os.Exit(0)
-	}(ctx)
-	//checkCertificateStatusLogic := logic.NewCheckCertificateStatusLogic(svcCtx)
-	//logrus.Infof("Start running the scheduled check certificate and private key task.")
-	ticker := time.NewTicker(time.Second)
-	for range ticker.C {
-		logrus.Infof("Start task.")
-		//checkCertificateStatusLogic.StartCheck()
-		ticker.Reset(time.Hour * 6)
-		logrus.Infof("The current inspection task is completed.")
-	}
+	clientLogic.Start()
 	return nil
 }

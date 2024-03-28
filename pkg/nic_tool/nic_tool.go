@@ -7,9 +7,9 @@ import (
 )
 
 type NicTool interface {
-	SetCidrAndUp(tunName, cidr string) string
-	SetMtu(tunName string, mtu int) string
-	SetRoute(tunName, dst string) string
+	SetCidrAndUp() string
+	SetMtu() string
+	SetRoute(cidr string) string
 }
 
 type tool struct {

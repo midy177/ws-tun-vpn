@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/cobra"
 	"log"
@@ -18,7 +19,27 @@ var rootCmd = &cobra.Command{
 	Short: "Websocket tun vpn",
 	Long:  `A simple VPN based on websocket and tun devices written in Go.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Todo run service ....
+		config, ok := cmd.Context().Value("config").(*types.ServerConfig)
+		if !ok {
+			return errors.New("config not found in context")
+		}
+		util.ValidateWithFatal(config.AuthCode, "required", "--auth-code")
+		if len(config.PushRoutes) > 0 {
+			for v := range config.PushRoutes {
+				util.ValidateWithFatal(v, "required,cidrv4", "--push-routes")
+			}
+		}
+		if config.EnableTLS && !config.AutoCert {
+			util.FlagRequiredWithFatal(cmd, "certificate-file")
+			util.FlagRequiredWithFatal(cmd, "private-key-file")
+		}
+		if config.EnableTLS && config.AutoCert {
+			util.ValidateWithFatal(config.Domain, "required,fqdn", "--domain")
+		}
+		if config.EnableTLS && !config.AutoCert {
+			util.ValidateWithFatal(config.CertificateFile, "required,filepath", "--certificate-file")
+			util.ValidateWithFatal(config.PrivateKeyFile, "required,filepath", "--private-key-file")
+		}
 		return service.NewServerService(cmd.Context())
 	},
 }
@@ -36,7 +57,7 @@ func main() {
 	var cidr string
 	rootCmd.Flags().StringVar(&cidr, "cidr", "10.7.7.0/24",
 		"Classless Inter-Domain Routing of ipv4.")
-	util.ValidateWithFatal(cidr, "required,cidr")
+	util.ValidateWithFatal(cidr, "required,cidr", "--cidr")
 	rootCmd.Flags().BoolVar(&config.AutoCert, "auto_cert", false,
 		"Automatically generate a certificate that enables HTTPS server.")
 	rootCmd.Flags().BoolVar(&config.AcmeCert, "acme_cert", false,
@@ -53,27 +74,10 @@ func main() {
 		"Routes that are pushed to clients.")
 	rootCmd.Flags().StringVar(&config.AuthCode, "auth-code", "",
 		"The authentication code for the client to connect to the server.")
-	util.ValidateWithFatal(config.AuthCode, "required,ascii,alphanum,uppercase,lowercase")
-	if len(config.PushRoutes) > 0 {
-		for v := range config.PushRoutes {
-			util.ValidateWithFatal(v, "required,cidrv4")
-		}
-	}
-	if config.EnableTLS && !config.AutoCert {
-		util.FlagRequiredWithFatal(rootCmd, "certificate-file")
-		util.FlagRequiredWithFatal(rootCmd, "private-key-file")
-	}
-	if config.EnableTLS && config.AutoCert {
-		util.ValidateWithFatal(config.Domain, "required,fqdn")
-	}
-	if config.EnableTLS && !config.AutoCert {
-		util.ValidateWithFatal(config.CertificateFile, "required,filepath")
-		util.ValidateWithFatal(config.PrivateKeyFile, "required,filepath")
-	}
 
 	cidrSlice := netutil.GetCidrV4SliceWithFatal(cidr)
-	config.BindAddress = cidrSlice[0]
 	config.AddressPool = addr_pool.NewAddressPool(cidrSlice[1:], netutil.GetCidrV4Mask(cidr))
+	config.BindAddress = cidrSlice[0] + "/" + netutil.GetCidrV4Mask(cidr)
 	config.Cache = cache.New(30*time.Minute, 10*time.Minute)
 	rootCmd.SetContext(context.WithValue(context.Background(), "config", config))
 	if err := rootCmd.Execute(); err != nil {

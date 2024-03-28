@@ -8,8 +8,11 @@ import (
 	"github.com/gobwas/ws/wsutil"
 	"log"
 	"net"
+	"runtime"
+	"strings"
 	"time"
 	"ws-tun-vpn/pkg/netutil"
+	"ws-tun-vpn/pkg/nic_tool"
 	"ws-tun-vpn/types"
 )
 
@@ -34,9 +37,25 @@ func NewServerLogic(ctx context.Context) (*ServerLogic, error) {
 
 // ServerTunPacketRouteToClient 监听tun设备收到的数据，并将其转发给客户端
 func (s *ServerLogic) ServerTunPacketRouteToClient() {
+	nt := nic_tool.NewNicTool(s.config.IFace.Name(), s.config.BindAddress, int(s.config.MTU))
+	info := nt.SetCidrAndUp()
+	if s.config.Verbose && runtime.GOOS != "windows" {
+		log.Printf("set tun network card(%s) cidr(%s) and up.\n", s.config.IFace.Name(), s.config.BindAddress)
+		if len(info) > 0 {
+			log.Println(info)
+		}
+	}
+	info = nt.SetMtu()
+	if s.config.Verbose {
+		log.Printf("set tun network card(%s) mtu: %d\n", s.config.IFace.Name(), s.config.MTU)
+		if len(info) > 0 {
+			log.Println(info)
+		}
+	}
 	packet := make([]byte, 0, 2048)
+	packet = append(packet, packetMsg)
 	for {
-		n, err := s.config.IFace.Read(packet)
+		n, err := s.config.IFace.Read(packet[1:])
 		if err != nil {
 			log.Fatalf("failed to read packet: %v", err)
 			//netutil.PrintErr(err, s.config.Verbose)
@@ -63,21 +82,14 @@ func (s *ServerLogic) Authenticate(authCode string) bool {
 func (s *ServerLogic) HandleConnection(client net.Conn) error {
 	defer client.Close()
 	for {
-		recv, op, err := wsutil.ReadClientData(client)
+		recv, err := wsutil.ReadClientBinary(client)
 		if err != nil {
 			netutil.PrintErr(err, s.config.Verbose)
 			break
 		}
-		if op == ws.OpText {
-			if s.config.Verbose {
-				log.Println(string(recv[:]))
-			}
-			wsutil.WriteServerMessage(client, op, recv)
-		} else if op == ws.OpBinary {
-			if key := netutil.GetSrcKey(recv); key != "" {
-				//counter.IncrReadBytes(len(recv))
-				s.config.IFace.Write(recv)
-			}
+		if key := netutil.GetSrcKey(recv); key != "" {
+			//counter.IncrReadBytes(len(recv))
+			_, _ = s.config.IFace.Write(recv)
 		}
 	}
 	return errors.New("")
@@ -90,18 +102,19 @@ func (s *ServerLogic) DistributeCIDR(client net.Conn) (string, error) {
 	if addr == "" {
 		return "", errors.New("no available address in pool")
 	}
-	err := wsutil.WriteServerMessage(client, ws.OpBinary, []byte(addr+"/"+mask))
-	if err != nil {
-		return "", err
-	}
-	recv, op, err := wsutil.ReadClientData(client)
-	if err != nil {
-		return "", err
-	}
-	if op == ws.OpBinary && bytes.Equal(recv, []byte("ok")) {
-		return addr, nil
-	}
-	return "", errors.New("client response not ok")
+	bbf := bytes.Buffer{}
+	bbf.WriteRune(dhcpMsg)
+	bbf.WriteString(addr + "/" + mask)
+	bbf.WriteString(strings.Join(s.config.PushRoutes, ","))
+	return addr, wsutil.WriteServerMessage(client, ws.OpBinary, bbf.Bytes())
+}
+
+// DistributeRote 下发cidr给客户端
+func (s *ServerLogic) DistributeRote(client net.Conn) error {
+	bbf := bytes.Buffer{}
+	bbf.WriteRune(routeMsg)
+	bbf.WriteString(strings.Join(s.config.PushRoutes, ","))
+	return wsutil.WriteServerMessage(client, ws.OpBinary, bbf.Bytes())
 }
 
 // RecycleCIDR 回收下发的cidr

@@ -2,7 +2,6 @@ package netutil
 
 import (
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,11 +38,8 @@ func TestExecCmdRecoder(t *testing.T) {
 }
 
 func TestGetCidrV4First(t *testing.T) {
-	cidr := "192.168.0.0/24"
+	cidr := "192.168.0.10/24"
 	fmt.Println(GetCidrV4Mask(cidr))
-	firstIp, err := GetCidrV4Slice(cidr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(firstIp)
+	cidrSlice := GetCidrV4SliceWithFatal(cidr)
+	fmt.Println(cidrSlice)
 }

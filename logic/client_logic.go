@@ -2,13 +2,32 @@ package logic
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
+	"fmt"
+	"github.com/gobwas/ws"
+	"github.com/gobwas/ws/wsutil"
+	"github.com/net-byte/water"
+	"golang.org/x/sync/errgroup"
+	"io"
+	"log"
+	"net"
+	"net/http"
+	"runtime"
+	"strings"
+	"time"
+	"ws-tun-vpn/pkg/nic_tool"
+	"ws-tun-vpn/pkg/util"
 	"ws-tun-vpn/types"
 )
 
 type ClientLogic struct {
-	ctx    context.Context
-	config *types.ClientConfig
+	ctx     context.Context
+	config  *types.ClientConfig
+	conn    net.Conn
+	iFace   *water.Interface
+	eg      *errgroup.Group
+	nicTool nic_tool.NicTool
 }
 
 // NewClientLogic create a new client logic
@@ -17,13 +36,176 @@ func NewClientLogic(ctx context.Context) (*ClientLogic, error) {
 	if !ok {
 		return nil, errors.New("failed to get config from context")
 	}
+	errg, childCtx := errgroup.WithContext(ctx)
 	return &ClientLogic{
-		ctx:    ctx,
+		ctx:    childCtx,
+		eg:     errg,
 		config: config,
 	}, nil
 }
 
-// Start start the client logic
+// Start the client logic
 func (c *ClientLogic) Start() {
+	if err := c.connectServer(); err != nil {
+		log.Printf("failed to connect to server: %v", err)
+		return
+	}
+	defer c.conn.Close()
+	c.eg.Go(c.directLoop)
+	c.eg.Go(c.receiveLoop)
+	err := c.eg.Wait()
+	if err != nil {
+		log.Printf("running end with error: %v", err)
+	}
+}
 
+func (c *ClientLogic) connectServer() error {
+	header := make(http.Header)
+	header.Set("user-agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36")
+	header.Set("Authorization", c.config.AuthCode)
+	dialer := ws.Dialer{
+		Header:  ws.HandshakeHeaderHTTP(header),
+		Timeout: 30 * time.Second,
+	}
+
+	url := "ws://" + c.config.ServerUrl + "/connect"
+	if c.config.EnableTLS {
+		url = "wss://" + c.config.ServerUrl + "/connect"
+		dialer.TLSConfig = &tls.Config{
+			InsecureSkipVerify: c.config.SkipTLSVerify,
+		}
+	}
+	conn, _, _, err := dialer.Dial(context.Background(), url)
+	if err != nil {
+		return err
+	}
+	c.conn = conn
+	return nil
+}
+
+// direct tun data to server
+func (c *ClientLogic) directLoop() error {
+	if c.conn == nil {
+		return errors.New("connection not established")
+	}
+	if c.iFace == nil {
+		return errors.New("interface not configured")
+	}
+	// Reuse the same buffer to reduce memory allocation
+	data := make([]byte, 0, 1500)
+	for {
+		select {
+		case <-c.ctx.Done():
+			return nil
+		default:
+			n, err := c.iFace.Read(data)
+			// when read err of io.EOF, should continue to the next loop
+			if err != nil && err != io.EOF {
+				return err
+			}
+			//if err != nil {
+			//	return err
+			//}
+
+			if n == 0 {
+				continue
+			}
+			if err := wsutil.WriteServerBinary(c.conn, data[:n]); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+// receive data from server and forward to tun interface
+func (c *ClientLogic) receiveLoop() error {
+	if c.conn == nil {
+		return errors.New("connection not established")
+	}
+	if c.iFace == nil {
+		return errors.New("interface not configured")
+	}
+	for {
+		select {
+		case <-c.ctx.Done():
+			return nil
+		default:
+			data, err := wsutil.ReadServerBinary(c.conn)
+			if err != nil {
+				return err
+			}
+			if len(data) == 0 {
+				continue
+			}
+			switch data[0] {
+			case dhcpMsg:
+				if err := c.handleDhcpMsg(data[1:]); err != nil {
+					return err
+				}
+			case routeMsg:
+				c.handleRouteMsg(data[1:])
+			case packetMsg:
+				if _, err := c.iFace.Write(data[1:]); err != nil {
+					return err
+				}
+				if c.config.Verbose {
+					// 打印接收到的包大小
+					log.Printf("received packet size: %d", len(data[1:]))
+				}
+			default:
+				return errors.New(fmt.Sprintf("unknown message type: %v", data[0]))
+			}
+		}
+	}
+}
+
+func (c *ClientLogic) handleDhcpMsg(cidr []byte) error {
+	if c.conn == nil {
+		return errors.New("connection not established")
+	}
+	cidrS := string(cidr)
+	if c.config.Verbose {
+		log.Printf("received dhcp message: %v", cidrS)
+	}
+	_, _, err := net.ParseCIDR(cidrS)
+	if err != nil {
+		return err
+	}
+
+	wc := water.Config{DeviceType: water.TUN}
+	wc.PlatformSpecificParams = water.PlatformSpecificParams{}
+	os := runtime.GOOS
+	wc.PlatformSpecificParams.Name = util.GenerateTunName(4)
+	if os == "windows" {
+		wc.PlatformSpecificParams.Network = []string{cidrS}
+	}
+	iFace, err := water.New(wc)
+	if err != nil {
+		return err
+	}
+	c.iFace = iFace
+	log.Printf("interface created successfully: %v", iFace.Name())
+	c.nicTool = nic_tool.NewNicTool(iFace.Name(), cidrS, int(c.config.MTU))
+	info := c.nicTool.SetCidrAndUp()
+	if c.config.Verbose && os != "windows" {
+		log.Printf("set tun network card(%s) cidr(%s) and up.\n", iFace.Name(), cidrS)
+		if len(info) > 0 {
+			log.Println(info)
+		}
+	}
+	info = c.nicTool.SetMtu()
+	if c.config.Verbose {
+		log.Printf("set tun network card(%s) mtu: %d\n", iFace.Name(), c.config.MTU)
+		if len(info) > 0 {
+			log.Println(info)
+		}
+	}
+	return nil
+}
+
+func (c *ClientLogic) handleRouteMsg(list []byte) {
+	routes := strings.Split(string(list), ",")
+	for _, route := range routes {
+		c.nicTool.SetRoute(route)
+	}
 }
