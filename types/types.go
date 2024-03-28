@@ -1,9 +1,9 @@
 package types
 
 import (
-	"github.com/net-byte/water"
 	"github.com/patrickmn/go-cache"
 	"ws-tun-vpn/pkg/addr_pool"
+	"ws-tun-vpn/pkg/water"
 )
 
 type BaseConfig struct {

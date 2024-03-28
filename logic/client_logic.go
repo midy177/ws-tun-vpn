@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
-	"github.com/net-byte/water"
 	"golang.org/x/sync/errgroup"
 	"io"
 	"log"
@@ -18,16 +17,18 @@ import (
 	"time"
 	"ws-tun-vpn/pkg/nic_tool"
 	"ws-tun-vpn/pkg/util"
+	"ws-tun-vpn/pkg/water"
 	"ws-tun-vpn/types"
 )
 
 type ClientLogic struct {
-	ctx     context.Context
-	config  *types.ClientConfig
-	conn    net.Conn
-	iFace   *water.Interface
-	eg      *errgroup.Group
-	nicTool nic_tool.NicTool
+	ctx      context.Context
+	config   *types.ClientConfig
+	conn     net.Conn
+	iFace    *water.Interface
+	eg       *errgroup.Group
+	nicTool  nic_tool.NicTool
+	nicReady bool
 }
 
 // NewClientLogic create a new client logic
@@ -88,17 +89,18 @@ func (c *ClientLogic) directLoop() error {
 	if c.conn == nil {
 		return errors.New("connection not established")
 	}
-	if c.iFace == nil {
-		return errors.New("interface not configured")
-	}
 	// Reuse the same buffer to reduce memory allocation
-	data := make([]byte, 0, 1500)
+	packet := make([]byte, 0, 2048)
+	packet = append(packet, packetMsg)
 	for {
 		select {
 		case <-c.ctx.Done():
 			return nil
 		default:
-			n, err := c.iFace.Read(data)
+			if !c.nicReady {
+				continue
+			}
+			n, err := c.iFace.Read(packet[1:])
 			// when read err of io.EOF, should continue to the next loop
 			if err != nil && err != io.EOF {
 				return err
@@ -110,7 +112,7 @@ func (c *ClientLogic) directLoop() error {
 			if n == 0 {
 				continue
 			}
-			if err := wsutil.WriteServerBinary(c.conn, data[:n]); err != nil {
+			if err := wsutil.WriteServerBinary(c.conn, packet[:n]); err != nil {
 				return err
 			}
 		}
@@ -121,9 +123,6 @@ func (c *ClientLogic) directLoop() error {
 func (c *ClientLogic) receiveLoop() error {
 	if c.conn == nil {
 		return errors.New("connection not established")
-	}
-	if c.iFace == nil {
-		return errors.New("interface not configured")
 	}
 	for {
 		select {
@@ -200,6 +199,7 @@ func (c *ClientLogic) handleDhcpMsg(cidr []byte) error {
 			log.Println(info)
 		}
 	}
+	c.nicReady = true
 	return nil
 }
 

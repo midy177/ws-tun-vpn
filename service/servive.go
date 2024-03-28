@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"github.com/net-byte/water"
 	"io"
 	"log"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"ws-tun-vpn/handler"
 	"ws-tun-vpn/logic"
 	"ws-tun-vpn/pkg/util"
+	"ws-tun-vpn/pkg/water"
 	"ws-tun-vpn/types"
 )
 
@@ -23,7 +23,8 @@ func NewServerService(ctx context.Context) error {
 	os := runtime.GOOS
 	wc.PlatformSpecificParams.Name = util.GenerateTunName(4)
 	if os == "windows" {
-		wc.PlatformSpecificParams.Network = []string{config.BindAddress + "/" + config.AddressPool.GetMask()}
+		wc.PlatformSpecificParams.Network = []string{config.BindAddress}
+		wc.PlatformSpecificParams.Mtu = int(config.MTU)
 	}
 	iFace, err := water.New(wc)
 	if err != nil {

@@ -19,8 +19,8 @@ var rootCmd = &cobra.Command{
 		if !ok {
 			return errors.New("config not found in context")
 		}
-		util.ValidateWithFatal(config.ServerUrl, "required,url", "--server_url")
-		util.ValidateWithFatal(config.AuthCode, "required,ascii,alphanum,uppercase,lowercase", "--auth-code")
+		util.ValidateWithFatal(config.ServerUrl, "required", "--server-url")
+		util.ValidateWithFatal(config.AuthCode, "required", "--auth-code")
 		return service.NewClientService(cmd.Context())
 	},
 }
@@ -34,7 +34,7 @@ func main() {
 	rootCmd.Flags().UintVar(&config.MTU, "mtu", 1500, "Maximum Transmission Unit.")
 	rootCmd.Flags().BoolVar(&config.SkipTLSVerify, "skip-tls-verify", false,
 		"Skip the validation of the server-side certificate.")
-	rootCmd.Flags().StringVar(&config.CertificateFile, "certificate_file", "",
+	rootCmd.Flags().StringVar(&config.CertificateFile, "certificate-file", "",
 		"Use the specified certificate to verify the certificate on the server.")
 	rootCmd.Flags().StringVar(&config.AuthCode, "auth-code", "",
 		"The authentication code for the client to connect to the server.")
