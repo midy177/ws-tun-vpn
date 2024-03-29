@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
 	"log"
 	"net"
@@ -52,10 +51,12 @@ func (s *ServerLogic) ServerTunPacketRouteToClient() {
 			log.Println(info)
 		}
 	}
-	packet := make([]byte, 0, 2048)
-	packet = append(packet, packetMsg)
+	packet := make([]byte, 2048)
+	var buf bytes.Buffer
 	for {
-		n, err := s.config.IFace.Read(packet[1:])
+		buf.Reset()
+		buf.WriteRune(packetMsg)
+		n, err := s.config.IFace.Read(packet)
 		if err != nil {
 			log.Fatalf("failed to read packet: %v", err)
 			//netutil.PrintErr(err, s.config.Verbose)
@@ -63,10 +64,19 @@ func (s *ServerLogic) ServerTunPacketRouteToClient() {
 		b := packet[:n]
 		if key := netutil.GetDstKey(b); key != "" {
 			if v, ok := s.config.Cache.Get(key); ok {
-				err := wsutil.WriteServerBinary(v.(net.Conn), b)
+				if s.config.Verbose {
+					log.Printf(" start send data to client: %v\n", key)
+				}
+				buf.Write(b)
+				err := wsutil.WriteServerBinary(v.(net.Conn), buf.Bytes())
 				if err != nil {
+					log.Printf("failed to write data to client: %v,release key: %s\n", err, key)
 					s.config.Cache.Delete(key)
 					continue
+				}
+			} else {
+				if s.config.Verbose {
+					log.Printf("client not found: %s\n", key)
 				}
 			}
 		}
@@ -84,37 +94,44 @@ func (s *ServerLogic) HandleConnection(client net.Conn) error {
 	for {
 		recv, err := wsutil.ReadClientBinary(client)
 		if err != nil {
-			netutil.PrintErr(err, s.config.Verbose)
-			break
+			if s.config.Verbose {
+				log.Printf("failed to read client data,err: %v\n", err)
+			}
+			return err
 		}
 		if key := netutil.GetSrcKey(recv); key != "" {
 			//counter.IncrReadBytes(len(recv))
 			_, _ = s.config.IFace.Write(recv)
+			if s.config.Verbose {
+				log.Printf("recv data from client: %s, len: %d\n", key, len(recv))
+			}
 		}
 	}
-	return errors.New("")
 }
 
 // DistributeCIDR 下发cidr给客户端
 func (s *ServerLogic) DistributeCIDR(client net.Conn) (string, error) {
-	s.config.Cache.Set("", client, 24*time.Hour)
 	addr, mask := s.config.AddressPool.GetAddressFromPool()
 	if addr == "" {
 		return "", errors.New("no available address in pool")
 	}
-	bbf := bytes.Buffer{}
-	bbf.WriteRune(dhcpMsg)
-	bbf.WriteString(addr + "/" + mask)
-	bbf.WriteString(strings.Join(s.config.PushRoutes, ","))
-	return addr, wsutil.WriteServerMessage(client, ws.OpBinary, bbf.Bytes())
+	// store client connection in cache
+	s.config.Cache.Set(addr, client, 24*time.Hour)
+	var buf bytes.Buffer
+	buf.WriteRune(dhcpMsg)
+	buf.WriteString(addr + "/" + mask)
+	return addr, wsutil.WriteServerBinary(client, buf.Bytes())
 }
 
 // DistributeRote 下发cidr给客户端
 func (s *ServerLogic) DistributeRote(client net.Conn) error {
-	bbf := bytes.Buffer{}
-	bbf.WriteRune(routeMsg)
-	bbf.WriteString(strings.Join(s.config.PushRoutes, ","))
-	return wsutil.WriteServerMessage(client, ws.OpBinary, bbf.Bytes())
+	var buf bytes.Buffer
+	buf.WriteRune(routeMsg)
+	if len(s.config.PushRoutes) == 0 {
+		return nil
+	}
+	buf.WriteString(strings.Join(s.config.PushRoutes, ","))
+	return wsutil.WriteServerBinary(client, buf.Bytes())
 }
 
 // RecycleCIDR 回收下发的cidr

@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"log"
 	"ws-tun-vpn/pkg/util"
@@ -21,6 +23,10 @@ var rootCmd = &cobra.Command{
 		}
 		util.ValidateWithFatal(config.ServerUrl, "required", "--server-url")
 		util.ValidateWithFatal(config.AuthCode, "required", "--auth-code")
+		if config.Verbose {
+			configStr, _ := jsoniter.MarshalToString(config)
+			fmt.Printf("push routes to client: %s\n", configStr)
+		}
 		return service.NewClientService(cmd.Context())
 	},
 }

@@ -22,8 +22,7 @@ FROM --platform=linux/amd64 alpine:latest
 
 WORKDIR /app
 
-COPY --from=builder /build/wtvs /usr/local/bin/wtvs
-
-EXPOSE 9103
+COPY --from=builder /build/wtvs /bin/wtvs
+RUN chmod +x /bin/wtvs
 
 CMD ["wtvs", "-h"]

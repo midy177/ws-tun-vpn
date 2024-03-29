@@ -2,12 +2,12 @@ module ws-tun-vpn
 
 go 1.22.1
 
-
 require (
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/go-playground/validator/v10 v10.19.0
 	github.com/gobwas/ws v1.3.2
 	github.com/inhies/go-bytesize v0.0.0-20220417184213-4913239db9cf
+	github.com/json-iterator/go v1.1.12
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
@@ -34,6 +34,8 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mdlayher/netlink v1.7.2 // indirect
 	github.com/mdlayher/socket v0.5.0 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	go4.org/mem v0.0.0-20220726221520-4f986261bf13 // indirect

@@ -29,5 +29,5 @@ func (t *tool) SetMtu() string {
 
 // set the route for the tun device
 func (t *tool) SetRoute(cidr string) string {
-	return execCmd("/sbin/ip", "route", "add", t.cidr, "dev", t.tunName)
+	return execCmd("/sbin/ip", "route", "add", cidr, "dev", t.tunName)
 }

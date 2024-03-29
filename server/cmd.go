@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/cobra"
 	"log"
@@ -25,8 +27,8 @@ var rootCmd = &cobra.Command{
 		}
 		util.ValidateWithFatal(config.AuthCode, "required", "--auth-code")
 		if len(config.PushRoutes) > 0 {
-			for v := range config.PushRoutes {
-				util.ValidateWithFatal(v, "required,cidrv4", "--push-routes")
+			for _, v := range config.PushRoutes {
+				util.ValidateWithFatal(&v, "required,cidrv4", "--push-routes")
 			}
 		}
 		if config.EnableTLS && !config.AutoCert {
@@ -39,6 +41,10 @@ var rootCmd = &cobra.Command{
 		if config.EnableTLS && !config.AutoCert {
 			util.ValidateWithFatal(config.CertificateFile, "required,filepath", "--certificate-file")
 			util.ValidateWithFatal(config.PrivateKeyFile, "required,filepath", "--private-key-file")
+		}
+		if config.Verbose {
+			configStr, _ := jsoniter.MarshalToString(config)
+			fmt.Printf("push routes to client: %s\n", configStr)
 		}
 		return service.NewServerService(cmd.Context())
 	},
@@ -70,7 +76,7 @@ func main() {
 		"The certificate file that the server is bound to.")
 	rootCmd.Flags().StringVar(&config.PrivateKeyFile, "private-key-file", "",
 		"The private key file corresponding to the certificate bound to the server.")
-	config.PushRoutes = *rootCmd.Flags().StringArray("push-routes", []string{},
+	rootCmd.Flags().StringArrayVar(&config.PushRoutes, "push-routes", nil,
 		"Routes that are pushed to clients.")
 	rootCmd.Flags().StringVar(&config.AuthCode, "auth-code", "",
 		"The authentication code for the client to connect to the server.")

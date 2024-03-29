@@ -4,9 +4,8 @@
 package nic_tool
 
 import (
-	"net"
 	"strconv"
-	"ws-tun-vpn/pkg/netutil"
+	"ws-tun-vpn/pkg/util"
 )
 
 // SetCidrAndUp Set the cidr for the tun device
@@ -24,13 +23,7 @@ func (t *tool) SetMtu() string {
 // SetRoute set the route for the tun device,set the distributed cidr and parse the cidr to get
 // the first address as the tun device gateway and set the metric to 6
 func (t *tool) SetRoute(cidr string) string {
-	_, i, err := net.ParseCIDR(t.cidr)
-	if err != nil {
-		return err.Error()
-	}
-	cidrSlice := netutil.GetCidrV4SliceWithFatal(t.cidr)
-	if len(cidrSlice) < 2 {
-		return "invalid cidr"
-	}
-	return execCmd("cmd", "/C", "route", "add", cidr, "mask", i.Mask.String(), cidrSlice[0], "metric", "6")
+	ip, mask := util.CidrToIPAndMask(cidr)
+	gatewayIp, _ := util.CidrToIPAndMask(t.cidr)
+	return execCmd("cmd", "/C", "route", "add", ip, "mask", mask, gatewayIp, "metric", "6")
 }

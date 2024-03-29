@@ -5,7 +5,6 @@ package nic_tool
 
 import (
 	"strconv"
-	"strings"
 	"ws-tun-vpn/pkg/netutil"
 	"ws-tun-vpn/pkg/util"
 )
@@ -17,11 +16,11 @@ func (t *tool) SetCidrAndUp() string {
 		return "invalid cidr"
 	}
 	//  golang string to int
-	mask, err := strconv.Atoi(strings.Split(t.cidr, "/")[1])
+	_, mask := util.CidrToIPAndMask(t.cidr)
 	if err != nil {
 		return "invalid cidr"
 	}
-	return execCmd("ifconfig", t.tunName, "inet", cidrSlice[0], util.LenToSubNetMask(mask), "up")
+	return execCmd("ifconfig", t.tunName, "inet", cidrSlice[0], mask, "up")
 
 	//	return execCmd("ifconfig", t.tunName, "inet", strings.Split(t.cidr, "/")[1], cidrSlice[0], "up")
 }

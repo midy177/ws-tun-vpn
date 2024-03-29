@@ -90,8 +90,7 @@ func (c *ClientLogic) directLoop() error {
 		return errors.New("connection not established")
 	}
 	// Reuse the same buffer to reduce memory allocation
-	packet := make([]byte, 0, 2048)
-	packet = append(packet, packetMsg)
+	packet := make([]byte, 2048)
 	for {
 		select {
 		case <-c.ctx.Done():
@@ -100,19 +99,19 @@ func (c *ClientLogic) directLoop() error {
 			if !c.nicReady {
 				continue
 			}
-			n, err := c.iFace.Read(packet[1:])
+			n, err := c.iFace.Read(packet)
 			// when read err of io.EOF, should continue to the next loop
 			if err != nil && err != io.EOF {
 				return err
 			}
-			//if err != nil {
-			//	return err
-			//}
-
 			if n == 0 {
 				continue
 			}
-			if err := wsutil.WriteServerBinary(c.conn, packet[:n]); err != nil {
+			if c.config.Verbose {
+				// 打印接收到的包大小
+				log.Printf("send packet size: %d", n)
+			}
+			if err := wsutil.WriteClientBinary(c.conn, packet[:n]); err != nil {
 				return err
 			}
 		}
@@ -130,7 +129,7 @@ func (c *ClientLogic) receiveLoop() error {
 			return nil
 		default:
 			data, err := wsutil.ReadServerBinary(c.conn)
-			if err != nil {
+			if err != nil && err != io.EOF {
 				return err
 			}
 			if len(data) == 0 {
