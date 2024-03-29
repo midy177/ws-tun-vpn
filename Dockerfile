@@ -23,6 +23,10 @@ FROM --platform=linux/amd64 alpine:latest
 WORKDIR /app
 
 COPY --from=builder /build/wtvs /bin/wtvs
-RUN chmod +x /bin/wtvs
+RUN chmod +x /bin/wtvs \
+    && apk add --no-cache iptables iptables-legacy \
+    &&  rm /sbin/iptables \
+    &&  ln -s /sbin/iptables-legacy /sbin/iptables \
+    &&  apk add --no-cache ca-certificates bash iproute2 tzdata
 
 CMD ["wtvs", "-h"]
