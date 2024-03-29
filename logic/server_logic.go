@@ -51,6 +51,20 @@ func (s *ServerLogic) ServerTunPacketRouteToClient() {
 			log.Println(info)
 		}
 	}
+	info = nt.EnableIpForward()
+	if s.config.Verbose {
+		log.Println("set ip forward enable.")
+		if len(info) > 0 {
+			log.Println(info)
+		}
+	}
+	info = nt.EnableNat()
+	if s.config.Verbose {
+		log.Println("set ip nat enable.")
+		if len(info) > 0 {
+			log.Println(info)
+		}
+	}
 	packet := make([]byte, 2048)
 	var buf bytes.Buffer
 	for {

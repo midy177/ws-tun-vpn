@@ -3,23 +3,23 @@ package util
 import (
 	"fmt"
 	"net"
-	"os"
 	"testing"
 )
 
 func TestUtil(t *testing.T) {
-	cidr := "172.28.0.0/16"
-
-	// 解析 CIDR 地址
-	ip, ipnet, err := net.ParseCIDR(cidr)
+	interfaces, err := net.Interfaces()
 	if err != nil {
-		fmt.Printf("Failed to parse CIDR: %v\n", err)
-		os.Exit(1)
+		fmt.Println("Error:", err)
+		return
 	}
 
-	// ip 是网络地址
-	fmt.Println("IP:", ip.String())
-	mask := net.IP(ipnet.Mask).String()
-	// Mask 是子网掩码
-	fmt.Println("Mask:", mask)
+	for _, iface := range interfaces {
+		if iface.Flags&net.FlagUp != 0 && iface.Flags&net.FlagLoopback == 0 &&
+			iface.Flags&net.FlagPointToPoint == 0 &&
+			iface.Flags&net.FlagRunning != 0 {
+			fmt.Println("Name:", iface.Name)
+		}
+	}
+	ipNet := GetDefaultInterfaceName()
+	fmt.Println(ipNet)
 }

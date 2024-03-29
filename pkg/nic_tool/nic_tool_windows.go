@@ -23,7 +23,19 @@ func (t *tool) SetMtu() string {
 // SetRoute set the route for the tun device,set the distributed cidr and parse the cidr to get
 // the first address as the tun device gateway and set the metric to 6
 func (t *tool) SetRoute(cidr string) string {
-	ip, mask := util.CidrToIPAndMask(cidr)
-	gatewayIp, _ := util.CidrToIPAndMask(t.cidr)
-	return execCmd("cmd", "/C", "route", "add", ip, "mask", mask, gatewayIp, "metric", "6")
+	ipAddr, mask := util.CidrToIPNetAndMask(cidr)
+	gatewayAddr, _ := util.CidrAddrToIPAddrAndMask(t.cidr)
+	return execCmd("cmd", "/C", "route", "add", ipAddr, "mask", mask, gatewayAddr, "metric", "6")
+}
+
+// Enable IP forwarding
+func (t *tool) EnableIpForward() string {
+	return ""
+}
+
+// Enable NAT forwarding for the tun device
+func (t *tool) EnableNat() string {
+	//ipNet := util.CidrToIPNet(t.cidr)
+	//cn := util.GetDefaultInterfaceName()
+	return ""
 }

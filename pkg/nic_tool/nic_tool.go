@@ -10,6 +10,8 @@ type NicTool interface {
 	SetCidrAndUp() string
 	SetMtu() string
 	SetRoute(cidr string) string
+	EnableIpForward() string
+	EnableNat() string
 }
 
 type tool struct {

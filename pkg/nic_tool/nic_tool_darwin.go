@@ -16,7 +16,7 @@ func (t *tool) SetCidrAndUp() string {
 		return "invalid cidr"
 	}
 	//  golang string to int
-	_, mask := util.CidrToIPAndMask(t.cidr)
+	_, mask := util.CidrAddrToIPAddrAndMask(t.cidr)
 	if err != nil {
 		return "invalid cidr"
 	}
@@ -33,4 +33,16 @@ func (t *tool) SetMtu() string {
 // set the route for the tun device
 func (t *tool) SetRoute(cidr string) string {
 	return execCmd("route", "add", cidr, "-interface", t.tunName)
+}
+
+// Enable IP forwarding
+func (t *tool) EnableIpForward() string {
+	return ""
+}
+
+// Enable NAT forwarding for the tun device
+func (t *tool) EnableNat() string {
+	//ipNet := util.CidrToIPNet(t.cidr)
+	//cn := util.GetDefaultInterfaceName()
+	return ""
 }

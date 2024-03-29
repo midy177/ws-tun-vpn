@@ -6,6 +6,7 @@ package nic_tool
 import (
 	"strconv"
 	"strings"
+	"ws-tun-vpn/pkg/util"
 )
 
 // set the cidr for the tun device
@@ -30,4 +31,16 @@ func (t *tool) SetMtu() string {
 // set the route for the tun device
 func (t *tool) SetRoute(cidr string) string {
 	return execCmd("/sbin/ip", "route", "add", cidr, "dev", t.tunName)
+}
+
+// Enable IP forwarding
+func (t *tool) EnableIpForward() string {
+	return execCmd("/sbin/sysctl", "-w", "net.ipv4.ip_forward=1")
+}
+
+// Enable NAT forwarding for the tun device
+func (t *tool) EnableNat() string {
+	ipNet := util.CidrToIPNet(t.cidr)
+	cn := util.GetDefaultInterfaceName()
+	return execCmd("/sbin/iptables", "-t", "nat", "-A", "POSTROUTING", "-s", ipNet, "-o", cn, "-j", "MASQUERADE")
 }
