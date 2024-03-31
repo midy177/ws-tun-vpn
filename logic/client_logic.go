@@ -46,18 +46,14 @@ func NewClientLogic(ctx context.Context) (*ClientLogic, error) {
 }
 
 // Start the client logic
-func (c *ClientLogic) Start() {
+func (c *ClientLogic) Start() error {
 	if err := c.connectServer(); err != nil {
-		log.Printf("failed to connect to server: %v", err)
-		return
+		return err
 	}
 	defer c.conn.Close()
 	c.eg.Go(c.directLoop)
 	c.eg.Go(c.receiveLoop)
-	err := c.eg.Wait()
-	if err != nil {
-		log.Printf("running end with error: %v", err)
-	}
+	return c.eg.Wait()
 }
 
 func (c *ClientLogic) connectServer() error {

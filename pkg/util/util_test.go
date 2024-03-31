@@ -4,9 +4,16 @@ import (
 	"fmt"
 	"net"
 	"testing"
+	"ws-tun-vpn/pkg/gateway"
 )
 
 func TestUtil(t *testing.T) {
+
+	pv4, err := gateway.DiscoverGatewayIPv4()
+	if err != nil {
+		return
+	}
+	fmt.Println("Gateway IPv4:", pv4)
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		fmt.Println("Error:", err)

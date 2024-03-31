@@ -7,32 +7,32 @@ import (
 )
 
 type BaseConfig struct {
-	Verbose   bool
-	EnableTLS bool
-	MTU       uint
-	AuthCode  string
+	Verbose   bool   `json:"verbose,omitempty"`
+	EnableTLS bool   `json:"enable_tls,omitempty"`
+	MTU       uint   `json:"mtu,omitempty"`
+	AuthCode  string `json:"auth_code,omitempty"`
 }
 
 type ServerConfig struct {
 	BaseConfig
-	ListenOn string
+	ListenOn string `json:"listen_on"`
 	//CIDRv4          string
-	AutoCert        bool
-	AcmeCert        bool
-	Domain          string
-	CertificateFile string
-	PrivateKeyFile  string
-	PushRoutes      []string
-	BindAddress     string
-	AddressPool     *addr_pool.AddressPool
-	Cache           *cache.Cache
-	IFace           *water.Interface
+	AutoCert        bool                   `json:"auto_cert"`
+	AcmeCert        bool                   `json:"acme_cert"`
+	Domain          string                 `json:"domain"`
+	CertificateFile string                 `json:"certificate_file"`
+	PrivateKeyFile  string                 `json:"private_key_file"`
+	PushRoutes      []string               `json:"push_routes"`
+	BindAddress     string                 `json:"bind_address"`
+	AddressPool     *addr_pool.AddressPool `json:"-"`
+	Cache           *cache.Cache           `json:"-"`
+	IFace           *water.Interface       `json:"-"`
 }
 
 type ClientConfig struct {
 	BaseConfig
-	ServerUrl       string
-	CertificateFile string
-	SkipTLSVerify   bool
-	GlobalMode      bool
+	ServerUrl       string `json:"server_url,omitempty"`
+	CertificateFile string `json:"certificate_file,omitempty"`
+	SkipTLSVerify   bool   `json:"skip_tls_verify,omitempty"`
+	GlobalMode      bool   `json:"global_mode,omitempty"`
 }

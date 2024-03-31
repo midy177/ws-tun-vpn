@@ -17,9 +17,6 @@ func (t *tool) SetCidrAndUp() string {
 	}
 	//  golang string to int
 	_, mask := util.CidrAddrToIPAddrAndMask(t.cidr)
-	if err != nil {
-		return "invalid cidr"
-	}
 	return execCmd("ifconfig", t.tunName, "inet", cidrSlice[0], mask, "up")
 
 	//	return execCmd("ifconfig", t.tunName, "inet", strings.Split(t.cidr, "/")[1], cidrSlice[0], "up")

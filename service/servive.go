@@ -68,6 +68,5 @@ func NewClientService(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	clientLogic.Start()
-	return nil
+	return clientLogic.Start()
 }
