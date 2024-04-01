@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"ws-tun-vpn/pkg/counter"
 	"ws-tun-vpn/pkg/nic_tool"
 	"ws-tun-vpn/pkg/util"
 	"ws-tun-vpn/pkg/water"
@@ -50,9 +51,14 @@ func (c *ClientLogic) Start() error {
 	if err := c.connectServer(); err != nil {
 		return err
 	}
-	defer c.conn.Close()
 	c.eg.Go(c.directLoop)
 	c.eg.Go(c.receiveLoop)
+	<-c.ctx.Done()
+	_ = c.conn.Close()
+	//c.nicTool.ReleaseDevice()
+	if c.iFace != nil {
+		_ = c.iFace.Close()
+	}
 	return c.eg.Wait()
 }
 
@@ -107,6 +113,7 @@ func (c *ClientLogic) directLoop() error {
 				// 打印接收到的包大小
 				log.Printf("send packet size: %d", n)
 			}
+			counter.IncrWrittenBytes(n)
 			if err := wsutil.WriteClientBinary(c.conn, packet[:n]); err != nil {
 				return err
 			}
@@ -128,9 +135,11 @@ func (c *ClientLogic) receiveLoop() error {
 			if err != nil && err != io.EOF {
 				return err
 			}
-			if len(data) == 0 {
+			lenData := len(data)
+			if lenData == 0 {
 				continue
 			}
+			counter.IncrReadBytes(lenData)
 			switch data[0] {
 			case dhcpMsg:
 				if err := c.handleDhcpMsg(data[1:]); err != nil {
@@ -194,6 +203,7 @@ func (c *ClientLogic) handleDhcpMsg(cidr []byte) error {
 			log.Println(info)
 		}
 	}
+	//c.nicTool.SetRoute(cidrS)
 	c.nicReady = true
 	return nil
 }

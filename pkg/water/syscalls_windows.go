@@ -32,19 +32,19 @@ func openDev(config Config) (ifce *Interface, err error) {
 	if config.DeviceType == TAP {
 		return nil, err
 	}
-	id := &windows.GUID{
-		0x0000000,
-		0xFFFF,
-		0xFFFF,
-		[8]byte{0xFF, 0xe9, 0x76, 0xe5, 0x8c, 0x74, 0x06, 0x3e},
-	}
-	dev, err := tun.CreateTUNWithRequestedGUID(config.PlatformSpecificParams.Name, id, config.PlatformSpecificParams.Mtu)
+	//id := &windows.GUID{
+	//	0x0000000,
+	//	0xFFFF,
+	//	0xFFFF,
+	//	[8]byte{0xFF, 0xe9, 0x76, 0xe5, 0x8c, 0x74, 0x06, 0x3e},
+	//}
+	dev, err := tun.CreateTUN(config.PlatformSpecificParams.Name, config.PlatformSpecificParams.Mtu)
+	//dev, err := tun.CreateTUNWithRequestedGUID(config.PlatformSpecificParams.Name, id, config.PlatformSpecificParams.Mtu)
 	if err != nil {
 		return nil, err
 	}
 	nativeTunDevice := dev.(*tun.NativeTun)
 	link := winipcfg.LUID(nativeTunDevice.LUID())
-
 	networks := config.PlatformSpecificParams.Network
 	if len(networks) == 0 {
 		panic("network is empty")
@@ -76,7 +76,6 @@ func openDev(config Config) (ifce *Interface, err error) {
 	}
 
 	tunName, err := dev.Name()
-	wintun := &wintun{dev: dev}
-	ifce = &Interface{isTAP: (config.DeviceType == TAP), ReadWriteCloser: wintun, name: tunName}
+	ifce = &Interface{isTAP: (config.DeviceType == TAP), ReadWriteCloser: &wintun{dev: dev}, name: tunName}
 	return ifce, nil
 }

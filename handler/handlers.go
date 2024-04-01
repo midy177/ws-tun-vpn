@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 	"ws-tun-vpn/logic"
 )
 
@@ -54,6 +55,7 @@ func (h *Handler) AcceptConnectHandler() http.HandlerFunc {
 			log.Printf("[server] failed to distribute cidr: %v", err)
 			return
 		}
+		time.Sleep(time.Millisecond * 100)
 		err = h.logic.DistributeRote(conn)
 		if err != nil {
 			log.Printf("[server] failed to distribute route: %v", err)

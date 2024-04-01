@@ -39,3 +39,11 @@ func (t *tool) EnableNat() string {
 	//cn := util.GetDefaultInterfaceName()
 	return ""
 }
+
+func (t *tool) DisableNat() string {
+	return ""
+}
+
+//func (t *tool) ReleaseDevice() string {
+//	return execCmd("netsh", "interface", "set", "interface", t.tunName, "disable")
+//}

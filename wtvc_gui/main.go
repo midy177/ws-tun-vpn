@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -115,13 +116,15 @@ func makeWindow(w fyne.Window) fyne.CanvasObject {
 				popExitBtn := widget.NewButtonWithIcon("断开连接", theme.CancelIcon(), func() {})
 				popExitBtn.Importance = widget.WarningImportance
 				pop := widget.NewPopUp(
-					container.NewBorder(widget.NewLabel("连接成功"), popExitBtn, nil, nil),
+					container.NewBorder(widget.NewLabel("连接成功"), popExitBtn, layout.NewSpacer(), layout.NewSpacer()),
 					w.Canvas())
 				ctx, cancel := StartClient(&types.ClientConfig{
 					ServerUrl: serverUrl.Text,
 					BaseConfig: types.BaseConfig{
 						AuthCode:  password.Text,
 						EnableTLS: check.Checked,
+						Verbose:   true,
+						MTU:       1500,
 					},
 					CertificateFile: certFilename.Text,
 					SkipTLSVerify:   skipCheckCert.Checked,
@@ -164,10 +167,29 @@ func StartClient(config *types.ClientConfig, w fyne.Window) (context.Context, co
 	go func(ctx2 context.Context, cancel1 context.CancelFunc) {
 		err := service.NewClientService(context.WithValue(ctx, "config", config))
 		if err != nil {
-			log.Println(err)
-			dialog.ShowError(err, w)
+			drv := fyne.CurrentApp().Driver()
+			if drv, ok := drv.(desktop.Driver); ok {
+				childWindow := drv.CreateSplashWindow()
+				entryLoremIpsum := widget.NewMultiLineEntry()
+				entryLoremIpsum.SetText(err.Error())
+				entryLoremIpsum.Wrapping = fyne.TextWrapWord
+				entryLoremIpsum.Wrapping = fyne.TextWrapBreak
+				entryLoremIpsum.Scroll = container.ScrollBoth
+				card := widget.NewCard("错误信息", "", container.NewBorder(entryLoremIpsum, container.NewCenter(widget.NewButton("确认", func() {
+					childWindow.Close()
+					w.Show()
+				})), layout.NewSpacer(), layout.NewSpacer()))
+				childWindow.Resize(fyne.NewSize(400, 30))
+				childWindow.SetContent(card)
+				w.Hide()
+				childWindow.Show()
+			}
 		}
 		cancel1()
 	}(ctx, cancel)
 	return ctx, cancel
+}
+
+func Counter() fyne.CanvasObject {
+	return container.NewGridWithColumns(2, widget.NewLabel(""), widget.NewLabel(""))
 }

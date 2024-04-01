@@ -44,3 +44,7 @@ func (t *tool) EnableNat() string {
 	cn := util.GetDefaultInterfaceName()
 	return execCmd("/sbin/iptables", "-t", "nat", "-A", "POSTROUTING", "-s", ipNet, "-o", cn, "-j", "MASQUERADE")
 }
+
+//func (t *tool) ReleaseDevice() string {
+//	return execCmd("netsh", "interface", "set", "interface", t.tunName, "disable")
+//}
