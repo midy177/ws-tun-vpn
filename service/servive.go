@@ -6,10 +6,9 @@ import (
 	"log"
 	"net/http"
 	"runtime"
-	"sync/atomic"
-	"syscall"
 	"ws-tun-vpn/handler"
 	"ws-tun-vpn/logic"
+	"ws-tun-vpn/pkg/loadlib"
 	"ws-tun-vpn/pkg/util"
 	"ws-tun-vpn/pkg/water"
 	"ws-tun-vpn/types"
@@ -69,13 +68,9 @@ func NewServerService(ctx context.Context) error {
 var once uint32
 
 func NewClientService(ctx context.Context) error {
-	if runtime.GOOS == "windows" && atomic.LoadUint32(&once) == 0 {
-		_, err := syscall.LoadLibrary("wintun.dll")
-		if err != nil {
-			return err
-		}
-		atomic.StoreUint32(&once, 1)
-		//defer syscall.FreeLibrary(h)
+	err := loadlib.LoadTunLib()
+	if err != nil {
+		return err
 	}
 	clientLogic, err := logic.NewClientLogic(ctx)
 	if err != nil {

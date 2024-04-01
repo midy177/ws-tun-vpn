@@ -27,15 +27,22 @@ func main() {
 		w.Hide()
 	})
 	if desk, ok := a.(desktop.App); ok {
-		m := fyne.NewMenu("Websocket tun vpn client",
-			fyne.NewMenuItem("显示", func() {
-				w.Show()
-			}),
-			fyne.NewMenuItem("隐藏", func() {
-				w.Hide()
-			}))
+		quit := fyne.NewMenuItem("退出", nil)
+		quit.IsQuit = true
+		showAndHide := fyne.NewMenuItem("隐藏", nil)
+
+		m := fyne.NewMenu("Websocket tun vpn client", showAndHide, fyne.NewMenuItemSeparator(), quit)
 		desk.SetSystemTrayMenu(m)
-		//desk.SetSystemTrayIcon(ico.LoadIcon())
+		showAndHide.Action = func() {
+			if showAndHide.Label == "显示" {
+				showAndHide.Label = "隐藏"
+				w.Show()
+			} else {
+				showAndHide.Label = "显示"
+				w.Hide()
+			}
+			m.Refresh()
+		}
 	}
 	w.SetContent(makeWindow(w))
 	w.SetCloseIntercept(func() {

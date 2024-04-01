@@ -53,12 +53,14 @@ func (c *ClientLogic) Start() error {
 	}
 	c.eg.Go(c.directLoop)
 	c.eg.Go(c.receiveLoop)
-	<-c.ctx.Done()
-	_ = c.conn.Close()
-	//c.nicTool.ReleaseDevice()
-	if c.iFace != nil {
-		_ = c.iFace.Close()
-	}
+	c.eg.Go(func() error {
+		<-c.ctx.Done()
+		_ = c.conn.Close()
+		if c.iFace != nil {
+			_ = c.iFace.Close()
+		}
+		return errors.New("主动关闭连接！")
+	})
 	return c.eg.Wait()
 }
 
