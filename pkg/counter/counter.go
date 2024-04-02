@@ -40,3 +40,9 @@ func PrintBytes(serverMode bool) string {
 	}
 	return fmt.Sprintf("download %v upload %v", bytesize.New(float64(GetReadBytes())).String(), bytesize.New(float64(GetWrittenBytes())).String())
 }
+
+// ResetBytes resets the bytes counters
+func ResetBytes() {
+	atomic.StoreUint64(&_totalReadBytes, 0)
+	atomic.StoreUint64(&_totalWrittenBytes, 0)
+}

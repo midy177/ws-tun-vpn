@@ -5,6 +5,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
@@ -12,6 +13,8 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"log"
+	"time"
+	"ws-tun-vpn/pkg/counter"
 	"ws-tun-vpn/service"
 	"ws-tun-vpn/types"
 	"ws-tun-vpn/wtvc_gui/ico"
@@ -22,27 +25,26 @@ func main() {
 	a := app.New()
 	a.SetIcon(ico.LoadIcon())
 	a.Settings().SetTheme(&the.MyTheme{})
-	w := a.NewWindow("连接VPN服务器配置")
+	w := a.NewWindow("WTVC客户端(code by Wuly)")
 	w.SetCloseIntercept(func() {
 		w.Hide()
 	})
 	if desk, ok := a.(desktop.App); ok {
 		quit := fyne.NewMenuItem("退出", nil)
+		quit.Icon = theme.LogoutIcon()
 		quit.IsQuit = true
-		showAndHide := fyne.NewMenuItem("隐藏", nil)
-
-		m := fyne.NewMenu("Websocket tun vpn client", showAndHide, fyne.NewMenuItemSeparator(), quit)
-		desk.SetSystemTrayMenu(m)
-		showAndHide.Action = func() {
-			if showAndHide.Label == "显示" {
-				showAndHide.Label = "隐藏"
-				w.Show()
-			} else {
-				showAndHide.Label = "显示"
-				w.Hide()
-			}
-			m.Refresh()
+		showMenu := fyne.NewMenuItem("显示", nil)
+		showMenu.Icon = theme.VisibilityIcon()
+		showMenu.Action = func() {
+			w.Show()
 		}
+		hideMenu := fyne.NewMenuItem("隐藏", nil)
+		hideMenu.Icon = theme.VisibilityOffIcon()
+		hideMenu.Action = func() {
+			w.Hide()
+		}
+		m := fyne.NewMenu("WTVC客户端(code by Wuly)", showMenu, hideMenu, fyne.NewMenuItemSeparator(), quit)
+		desk.SetSystemTrayMenu(m)
 	}
 	w.SetContent(makeWindow(w))
 	w.SetCloseIntercept(func() {
@@ -118,12 +120,14 @@ func makeWindow(w fyne.Window) fyne.CanvasObject {
 			tp := <-signal
 			switch tp {
 			case connect:
-				log.Println(serverUrl.Text, password.Text, certFilename.Text, check.Checked)
-
 				popExitBtn := widget.NewButtonWithIcon("断开连接", theme.CancelIcon(), func() {})
 				popExitBtn.Importance = widget.WarningImportance
-				pop := widget.NewPopUp(
-					container.NewBorder(widget.NewLabel("连接成功"), popExitBtn, layout.NewSpacer(), layout.NewSpacer()),
+				data := binding.NewString()
+				_ = data.Set("连接中...")
+				status := widget.NewLabelWithData(data)
+				status.TextStyle = fyne.TextStyle{Bold: true}
+				pop := widget.NewModalPopUp(
+					container.NewBorder(container.NewCenter(status), popExitBtn, layout.NewSpacer(), layout.NewSpacer()),
 					w.Canvas())
 				ctx, cancel := StartClient(&types.ClientConfig{
 					ServerUrl: serverUrl.Text,
@@ -136,6 +140,7 @@ func makeWindow(w fyne.Window) fyne.CanvasObject {
 					CertificateFile: certFilename.Text,
 					SkipTLSVerify:   skipCheckCert.Checked,
 				}, w)
+				Counter(ctx, data)
 				pop.Resize(fyne.NewSize(w.Canvas().Size().Width, w.Canvas().Size().Height))
 				popExitBtn.OnTapped = func() {
 					pop.Hide()
@@ -197,6 +202,21 @@ func StartClient(config *types.ClientConfig, w fyne.Window) (context.Context, co
 	return ctx, cancel
 }
 
-func Counter() fyne.CanvasObject {
-	return container.NewGridWithColumns(2, widget.NewLabel(""), widget.NewLabel(""))
+func Counter(ctx context.Context, data binding.String) {
+	go func() {
+		t := time.NewTicker(time.Second)
+		defer counter.ResetBytes()
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				err := data.Set(counter.PrintBytes(false))
+				if err != nil {
+					return
+				}
+			}
+		}
+	}()
 }
