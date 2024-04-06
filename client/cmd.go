@@ -27,7 +27,7 @@ var rootCmd = &cobra.Command{
 			configStr, _ := jsoniter.MarshalToString(config)
 			fmt.Printf("push routes to client: %s\n", configStr)
 		}
-		return service.NewClientService(cmd.Context())
+		return service.NewClientService(cmd.Context(), nil)
 	},
 }
 
