@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 	"ws-tun-vpn/pkg/counter"
+	"ws-tun-vpn/pkg/logview"
 	"ws-tun-vpn/pkg/nic_tool"
 	"ws-tun-vpn/pkg/util"
 	"ws-tun-vpn/pkg/water"
@@ -30,19 +31,21 @@ type ClientLogic struct {
 	eg       *errgroup.Group
 	nicTool  nic_tool.NicTool
 	nicReady bool
+	logView  logview.LogView
 }
 
 // NewClientLogic create a new client logic
-func NewClientLogic(ctx context.Context) (*ClientLogic, error) {
+func NewClientLogic(ctx context.Context, logView logview.LogView) (*ClientLogic, error) {
 	config, ok := ctx.Value("config").(*types.ClientConfig)
 	if !ok {
 		return nil, errors.New("failed to get config from context")
 	}
 	errg, childCtx := errgroup.WithContext(ctx)
 	return &ClientLogic{
-		ctx:    childCtx,
-		eg:     errg,
-		config: config,
+		ctx:     childCtx,
+		eg:      errg,
+		config:  config,
+		logView: logView,
 	}, nil
 }
 
@@ -61,7 +64,8 @@ func (c *ClientLogic) Start() error {
 		}
 		return errors.New("主动关闭连接！")
 	})
-	return c.eg.Wait()
+	err := c.eg.Wait()
+	return err
 }
 
 func (c *ClientLogic) connectServer() error {
@@ -93,12 +97,12 @@ func (c *ClientLogic) directLoop() error {
 	if c.conn == nil {
 		return errors.New("connection not established")
 	}
+	defer c.conn.Close()
 	// Reuse the same buffer to reduce memory allocation
 	packet := make([]byte, 2048)
 	for {
 		select {
 		case <-c.ctx.Done():
-			return nil
 		default:
 			if !c.nicReady {
 				continue
@@ -106,6 +110,7 @@ func (c *ClientLogic) directLoop() error {
 			n, err := c.iFace.Read(packet)
 			// when read err of io.EOF, should continue to the next loop
 			if err != nil && err != io.EOF {
+				c.logView.Print(logview.LogError, err.Error())
 				return err
 			}
 			if n == 0 {
@@ -126,15 +131,17 @@ func (c *ClientLogic) directLoop() error {
 // receive data from server and forward to tun interface
 func (c *ClientLogic) receiveLoop() error {
 	if c.conn == nil {
+		c.logView.Print(logview.LogError, "connection not established")
 		return errors.New("connection not established")
 	}
+	defer c.conn.Close()
 	for {
 		select {
 		case <-c.ctx.Done():
-			return nil
 		default:
 			data, err := wsutil.ReadServerBinary(c.conn)
 			if err != nil && err != io.EOF {
+				c.logView.Print(logview.LogError, err.Error())
 				return err
 			}
 			lenData := len(data)
@@ -145,12 +152,14 @@ func (c *ClientLogic) receiveLoop() error {
 			switch data[0] {
 			case dhcpMsg:
 				if err := c.handleDhcpMsg(data[1:]); err != nil {
+					c.logView.Print(logview.LogError, err.Error())
 					return err
 				}
 			case routeMsg:
 				c.handleRouteMsg(data[1:])
 			case packetMsg:
 				if _, err := c.iFace.Write(data[1:]); err != nil {
+					c.logView.Print(logview.LogError, err.Error())
 					return err
 				}
 				if c.config.Verbose {
@@ -158,6 +167,7 @@ func (c *ClientLogic) receiveLoop() error {
 					log.Printf("received packet size: %d", len(data[1:]))
 				}
 			default:
+				c.logView.Print(logview.LogError, fmt.Sprintf("unknown message type: %v", data[0]))
 				return errors.New(fmt.Sprintf("unknown message type: %v", data[0]))
 			}
 		}
@@ -166,6 +176,7 @@ func (c *ClientLogic) receiveLoop() error {
 
 func (c *ClientLogic) handleDhcpMsg(cidr []byte) error {
 	if c.conn == nil {
+		c.logView.Print(logview.LogError, "connection not established")
 		return errors.New("connection not established")
 	}
 	cidrS := string(cidr)
@@ -190,8 +201,13 @@ func (c *ClientLogic) handleDhcpMsg(cidr []byte) error {
 	}
 	c.iFace = iFace
 	log.Printf("interface created successfully: %v", iFace.Name())
+	c.logView.Print(logview.LogInfo, "interface created successfully: "+iFace.Name())
 	c.nicTool = nic_tool.NewNicTool(iFace.Name(), cidrS, int(c.config.MTU))
 	info := c.nicTool.SetCidrAndUp()
+
+	c.logView.Print(logview.LogInfo,
+		fmt.Sprintf("set tun network card(%s) cidr(%s) and up.\n", iFace.Name(), cidrS))
+
 	if c.config.Verbose && os != "windows" {
 		log.Printf("set tun network card(%s) cidr(%s) and up.\n", iFace.Name(), cidrS)
 		if len(info) > 0 {
@@ -199,6 +215,7 @@ func (c *ClientLogic) handleDhcpMsg(cidr []byte) error {
 		}
 	}
 	info = c.nicTool.SetMtu()
+	c.logView.Print(logview.LogInfo, fmt.Sprintf("set tun network card(%s) mtu: %d\n", iFace.Name(), c.config.MTU))
 	if c.config.Verbose {
 		log.Printf("set tun network card(%s) mtu: %d\n", iFace.Name(), c.config.MTU)
 		if len(info) > 0 {
@@ -214,5 +231,7 @@ func (c *ClientLogic) handleRouteMsg(list []byte) {
 	routes := strings.Split(string(list), ",")
 	for _, route := range routes {
 		c.nicTool.SetRoute(route)
+		c.logView.Print(logview.LogInfo, fmt.Sprintf("set tun network card(%s) route: %s\n", c.iFace.Name(), route))
+
 	}
 }

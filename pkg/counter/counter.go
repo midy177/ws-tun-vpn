@@ -1,7 +1,6 @@
 package counter
 
 import (
-	"fmt"
 	"sync/atomic"
 
 	"github.com/inhies/go-bytesize"
@@ -34,11 +33,16 @@ func GetWrittenBytes() uint64 {
 }
 
 // PrintBytes returns the bytes info
-func PrintBytes(serverMode bool) string {
+func PrintBytes(serverMode bool) (download, upload string) {
 	if serverMode {
-		return fmt.Sprintf("download %v upload %v", bytesize.New(float64(GetWrittenBytes())).String(), bytesize.New(float64(GetReadBytes())).String())
+		download = bytesize.New(float64(GetWrittenBytes())).String()
+		upload = bytesize.New(float64(GetReadBytes())).String()
+
+	} else {
+		download = bytesize.New(float64(GetReadBytes())).String()
+		upload = bytesize.New(float64(GetWrittenBytes())).String()
 	}
-	return fmt.Sprintf("download %v upload %v", bytesize.New(float64(GetReadBytes())).String(), bytesize.New(float64(GetWrittenBytes())).String())
+	return
 }
 
 // ResetBytes resets the bytes counters

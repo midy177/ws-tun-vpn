@@ -9,6 +9,7 @@ import (
 	"ws-tun-vpn/handler"
 	"ws-tun-vpn/logic"
 	"ws-tun-vpn/pkg/loadlib"
+	"ws-tun-vpn/pkg/logview"
 	"ws-tun-vpn/pkg/util"
 	"ws-tun-vpn/pkg/water"
 	"ws-tun-vpn/types"
@@ -67,12 +68,12 @@ func NewServerService(ctx context.Context) error {
 
 var once uint32
 
-func NewClientService(ctx context.Context) error {
+func NewClientService(ctx context.Context, logView logview.LogView) error {
 	err := loadlib.LoadTunLib()
 	if err != nil {
 		return err
 	}
-	clientLogic, err := logic.NewClientLogic(ctx)
+	clientLogic, err := logic.NewClientLogic(ctx, logView)
 	if err != nil {
 		return err
 	}

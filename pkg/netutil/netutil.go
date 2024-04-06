@@ -258,7 +258,8 @@ func PrintStats(enableVerbose bool, serverMode bool) {
 	go func() {
 		for {
 			time.Sleep(30 * time.Second)
-			log.Printf("stats:%v", counter.PrintBytes(serverMode))
+			d, u := counter.PrintBytes(serverMode)
+			log.Printf("stats:下载: %v,上传: %v", d, u)
 		}
 	}()
 }

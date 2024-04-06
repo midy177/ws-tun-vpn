@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"regexp"
 	"strconv"
 )
 
@@ -88,4 +89,13 @@ func GetDefaultInterfaceName() string {
 		}
 	}
 	return ""
+}
+
+func IsValidAddress(address string) bool {
+	// 正则表达式，用于匹配IP地址、主机名和端口的组合
+	pattern := `^(?:[0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}$|^[a-zA-Z0-9.-]+:[0-9]{1,5}$|^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$|^[a-zA-Z0-9.-]+$`
+	// 编译正则表达式
+	regex := regexp.MustCompile(pattern)
+	// 匹配字符串
+	return regex.MatchString(address)
 }

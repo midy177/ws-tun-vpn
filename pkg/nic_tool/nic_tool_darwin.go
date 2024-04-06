@@ -16,10 +16,9 @@ func (t *tool) SetCidrAndUp() string {
 		return "invalid cidr"
 	}
 	//  golang string to int
-	_, mask := util.CidrAddrToIPAddrAndMask(t.cidr)
-	return execCmd("ifconfig", t.tunName, "inet", cidrSlice[0], mask, "up")
-
-	//	return execCmd("ifconfig", t.tunName, "inet", strings.Split(t.cidr, "/")[1], cidrSlice[0], "up")
+	ipa, _ := util.CidrAddrToIPAddrAndMask(t.cidr)
+	return execCmd("ifconfig", t.tunName, "inet", ipa, cidrSlice[0], "up")
+	//sudo ("ifconfig", iFace.Name(), "inet", ip.String(), config.ServerIP, "up")
 }
 
 // set the mtu for the tun device

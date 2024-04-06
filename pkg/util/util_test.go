@@ -30,3 +30,21 @@ func TestUtil(t *testing.T) {
 	ipNet := GetDefaultInterfaceName()
 	fmt.Println(ipNet)
 }
+
+func TestName(t *testing.T) {
+	addresses := []string{
+		"192.168.1.1:8080",
+		"example.com:8080",
+		"192.168.1.1",
+		"example.com",
+		"invalid-address",
+	}
+
+	for _, address := range addresses {
+		if IsValidAddress(address) {
+			fmt.Printf("%s 是有效的地址\n", address)
+		} else {
+			fmt.Printf("%s 是无效的地址\n", address)
+		}
+	}
+}
