@@ -1,6 +1,6 @@
 # Websocket tun vpn
 
-`A simple VPN based on websocket and tun devices written in Go.`
+`A simple VPN based on websocket and tun devices written in Go,gui is write by fyne.Cross-platform, support Linux, mac, windows, mobile, etc.`
 
 ## main page,show the list of configs.
 ![](gui_screenshot/main_page.png) 
