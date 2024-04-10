@@ -57,7 +57,7 @@ func main() {
 	appContext.NavChannel <- app_context.NavEvent{
 		TargetPage: app_context.MainPage,
 	}
-	w.Resize(fyne.NewSize(500, 80))
+	w.Resize(fyne.NewSize(500, 800))
 	w.SetFixedSize(true)
 	w.ShowAndRun()
 }

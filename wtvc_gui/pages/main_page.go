@@ -17,7 +17,6 @@ import (
 
 // MakeMainPageContent creates the main page content
 func MakeMainPageContent(ctx *app_context.AppContext) fyne.CanvasObject {
-	ctx.Window.Resize(fyne.NewSize(200, 300))
 	var list *widget.List
 
 	list = widget.NewList(

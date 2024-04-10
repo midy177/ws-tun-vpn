@@ -59,7 +59,7 @@ func MakeConfigsPage(ctx *app_context.AppContext, isAdd bool) fyne.CanvasObject 
 		drv := fyne.CurrentApp().Driver()
 		if drv, ok := drv.(desktop.Driver); ok {
 			childWindow := drv.CreateSplashWindow()
-			childWindow.Resize(fyne.NewSize(520, 400))
+			childWindow.Resize(fyne.NewSize(720, 400))
 			fd := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 				defer childWindow.Close()
 				if err != nil {
