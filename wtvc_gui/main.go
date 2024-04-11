@@ -58,6 +58,6 @@ func main() {
 	appContext.NavChannel <- app_context.NavEvent{
 		TargetPage: app_context.MainPage,
 	}
-	w.SetFixedSize(true)
+	w.SetFixedSize(false)
 	w.ShowAndRun()
 }

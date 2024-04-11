@@ -102,7 +102,7 @@ func MakeMainPageContent(ctx *app_context.AppContext) fyne.CanvasObject {
 	// Create the scroll container for the list
 	scrollContainer := container.NewScroll(list)
 	// Set a minimum size for the scroll container if needed
-	scrollContainer.SetMinSize(fyne.NewSize(400, 300)) // Set width and height as needed
+	scrollContainer.SetMinSize(fyne.NewSize(500, 400)) // Set width and height as needed
 	// Use container.Max to allocate as much space as possible to the list
 	listWithMaxHeight := container.NewStack(scrollContainer)
 

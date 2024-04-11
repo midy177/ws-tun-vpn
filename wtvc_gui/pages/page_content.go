@@ -11,7 +11,7 @@ func MakePageContentLoop(ctx *app_context.AppContext) {
 		switch navEvent.TargetPage {
 		case app_context.MainPage:
 			ctx.Window.SetContent(container.NewPadded(MakeMainPageContent(ctx)))
-			ctx.Window.Resize(fyne.NewSize(500, 400))
+			//ctx.Window.Resize(fyne.NewSize(500, 400))
 		case app_context.AddConfigPage:
 			ctx.Window.SetContent(container.NewPadded(MakeConfigsPage(ctx, true)))
 			ctx.Window.Resize(fyne.NewSize(500, 400))
