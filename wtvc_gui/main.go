@@ -24,6 +24,7 @@ func main() {
 	//drv := fyne.CurrentApp().Driver()
 	//if dr, ok := drv.(desktop.Driver); ok {
 	//	w = dr.CreateSplashWindow()
+
 	//} else {
 	w = a.NewWindow("WTVC客户端(code by Wuly)")
 	//}
@@ -57,7 +58,6 @@ func main() {
 	appContext.NavChannel <- app_context.NavEvent{
 		TargetPage: app_context.MainPage,
 	}
-	w.Resize(fyne.NewSize(500, 800))
 	w.SetFixedSize(true)
 	w.ShowAndRun()
 }
