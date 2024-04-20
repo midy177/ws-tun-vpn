@@ -109,7 +109,7 @@ func openDevSystem(config Config) (ifce *Interface, err error) {
 		ctlID   uint32
 		ctlName [96]byte
 	}{}
-	copy(ctlInfo.ctlName[:], []byte(appleUTUNCtl))
+	copy(ctlInfo.ctlName[:], appleUTUNCtl)
 
 	if _, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd), uintptr(appleCTLIOCGINFO), uintptr(unsafe.Pointer(ctlInfo))); errno != 0 {
 		err = errno

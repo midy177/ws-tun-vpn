@@ -13,7 +13,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "wtvc",
+	Use:   "wtvc_gui",
 	Short: "Websocket tun vpn",
 	Long:  `A simple VPN based on websocket and tun devices written in Go.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
