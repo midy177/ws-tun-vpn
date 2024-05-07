@@ -1,4 +1,4 @@
-FROM golang:1.22.1-alpine3.19 as builder
+FROM golang:1.22.2-alpine3.19 as builder
 
 # Define the project name | 定义项目名称
 
@@ -7,8 +7,6 @@ COPY . .
 
 RUN go env -w GO111MODULE=on \
     && go env -w CGO_ENABLED=0 \
-    && go env -w GOOS=linux \
-    && go env -w GOARCH=amd64 \
     && go env \
     && go mod tidy \
     && go build -ldflags '-s -w' \
@@ -18,7 +16,7 @@ RUN go env -w GO111MODULE=on \
     -o wtvs server/cmd.go
 
 #linux/amd64,linux/arm64
-FROM --platform=linux/amd64 alpine:latest
+FROM alpine:latest
 
 WORKDIR /app
 

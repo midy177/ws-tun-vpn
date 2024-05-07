@@ -26,6 +26,4 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -gcflags=-trimpath=$GOPATH -asmfl
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -gcflags=-trimpath=$GOPATH -asmflags=-trimpath=$GOPATH -ldflags "-w -s" -o wtvc client/cmd.go
 
 
-docker buildx build \
---push \
---tag "docker.io/1228022817/ws-tun-vpn-server:latest"
+docker buildx build --platform linux/amd64,linux/arm64/v8 --rm --push -t 1228022817/ws-tun-vpn-server:latest -f Dockerfile .
