@@ -151,4 +151,5 @@ func (s *ServerLogic) DistributeRote(client net.Conn) error {
 // RecycleCIDR 回收下发的cidr
 func (s *ServerLogic) RecycleCIDR(addr string) {
 	s.config.Cache.Delete(addr)
+	s.config.AddressPool.PutAddressToPool(addr)
 }
