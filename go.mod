@@ -2,7 +2,7 @@ module ws-tun-vpn
 
 go 1.22.0
 
-toolchain go1.22.3
+toolchain go1.22.4
 
 require (
 	fyne.io/fyne/v2 v2.4.5
