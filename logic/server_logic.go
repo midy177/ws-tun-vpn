@@ -153,7 +153,7 @@ func (s *ServerLogic) DistributeRote(client net.Conn) error {
 func (s *ServerLogic) DistributeDns(client net.Conn) error {
 	var buf bytes.Buffer
 	buf.WriteRune(dnsMsg)
-	if len(s.config.PushRoutes) == 0 {
+	if len(s.config.PushDns) == 0 {
 		return nil
 	}
 	buf.WriteString(s.config.PushDns)
