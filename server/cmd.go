@@ -78,6 +78,8 @@ func main() {
 		"The private key file corresponding to the certificate bound to the server.")
 	rootCmd.Flags().StringArrayVar(&config.PushRoutes, "push-routes", nil,
 		"Routes that are pushed to clients.")
+	rootCmd.Flags().StringVar(&config.PushDns, "push-dns", "",
+		"dns that are pushed to clients.")
 	rootCmd.Flags().StringVar(&config.AuthCode, "auth-code", "",
 		"The authentication code for the client to connect to the server.")
 

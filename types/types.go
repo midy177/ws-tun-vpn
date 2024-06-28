@@ -23,6 +23,7 @@ type ServerConfig struct {
 	CertificateFile string                 `json:"certificate_file"`
 	PrivateKeyFile  string                 `json:"private_key_file"`
 	PushRoutes      []string               `json:"push_routes"`
+	PushDns         string                 `json:"push_dns"`
 	BindAddress     string                 `json:"bind_address"`
 	AddressPool     *addr_pool.AddressPool `json:"-"`
 	Cache           *cache.Cache           `json:"-"`

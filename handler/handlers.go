@@ -61,6 +61,11 @@ func (h *Handler) AcceptConnectHandler() http.HandlerFunc {
 			log.Printf("[server] failed to distribute route: %v", err)
 			return
 		}
+		err = h.logic.DistributeDns(conn)
+		if err != nil {
+			log.Printf("[server] failed to distribute dns: %v", err)
+			return
+		}
 		// handle the connection
 		err = h.logic.HandleConnection(conn)
 		if err != nil {

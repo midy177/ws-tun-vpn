@@ -114,6 +114,7 @@ func (s *ServerLogic) HandleConnection(client net.Conn) error {
 			return err
 		}
 		if key := netutil.GetSrcKey(recv); key != "" {
+			// ToDo can add blacklist to reject some pack
 			//counter.IncrReadBytes(len(recv))
 			_, _ = s.config.IFace.Write(recv)
 			if s.config.Verbose {
@@ -145,6 +146,17 @@ func (s *ServerLogic) DistributeRote(client net.Conn) error {
 		return nil
 	}
 	buf.WriteString(strings.Join(s.config.PushRoutes, ","))
+	return wsutil.WriteServerBinary(client, buf.Bytes())
+}
+
+// DistributeDns 下发dns给客户端
+func (s *ServerLogic) DistributeDns(client net.Conn) error {
+	var buf bytes.Buffer
+	buf.WriteRune(dnsMsg)
+	if len(s.config.PushRoutes) == 0 {
+		return nil
+	}
+	buf.WriteString(s.config.PushDns)
 	return wsutil.WriteServerBinary(client, buf.Bytes())
 }
 

@@ -44,6 +44,6 @@ func (t *tool) DisableNat() string {
 	return ""
 }
 
-//func (t *tool) ReleaseDevice() string {
-//	return execCmd("netsh", "interface", "set", "interface", t.tunName, "disable")
-//}
+func (t *tool) SetPrimaryDnsServer(dns string) string {
+	return execCmd("netsh", "interface", "ipv4", "set", "dnsservers", t.tunName, "static", dns, "primary")
+}

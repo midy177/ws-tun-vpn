@@ -43,6 +43,6 @@ func (t *tool) EnableNat() string {
 	return ""
 }
 
-//func (t *tool) ReleaseDevice() string {
-//	return execCmd("netsh", "interface", "set", "interface", t.tunName, "disable")
-//}
+func (t *tool) SetPrimaryDnsServer(dns string) string {
+	return execCmd("sudo", "networksetup", "-setdnsservers", t.tunName, dns)
+}

@@ -12,6 +12,7 @@ type NicTool interface {
 	SetRoute(cidr string) string
 	EnableIpForward() string
 	EnableNat() string
+	SetPrimaryDnsServer(dns string) string
 }
 
 type tool struct {

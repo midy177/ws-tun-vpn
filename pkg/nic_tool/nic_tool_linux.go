@@ -4,6 +4,7 @@
 package nic_tool
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"ws-tun-vpn/pkg/util"
@@ -45,6 +46,7 @@ func (t *tool) EnableNat() string {
 	return execCmd("/sbin/iptables", "-t", "nat", "-A", "POSTROUTING", "-s", ipNet, "-o", cn, "-j", "MASQUERADE")
 }
 
-//func (t *tool) ReleaseDevice() string {
-//	return execCmd("netsh", "interface", "set", "interface", t.tunName, "disable")
-//}
+func (t *tool) SetPrimaryDnsServer(dns string) string {
+	bash := fmt.Sprintf("if ! grep -q \"%s\" /etc/resolv.conf; then echo \"nameserver %s\" | sudo tee -a /etc/resolv.conf > /dev/null; fi", dns, dns)
+	return execCmd(bash)
+}

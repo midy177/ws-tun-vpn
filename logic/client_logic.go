@@ -166,6 +166,8 @@ func (c *ClientLogic) receiveLoop() error {
 					// 打印接收到的包大小
 					log.Printf("received packet size: %d", len(data[1:]))
 				}
+			case dnsMsg:
+				c.handleDnsMsg(data[1:])
 			default:
 				c.logView.Print(logview.LogError, fmt.Sprintf("unknown message type: %v", data[0]))
 				return errors.New(fmt.Sprintf("unknown message type: %v", data[0]))
@@ -234,4 +236,9 @@ func (c *ClientLogic) handleRouteMsg(list []byte) {
 		c.logView.Print(logview.LogInfo, fmt.Sprintf("set tun network card(%s) route: %s\n", c.iFace.Name(), route))
 
 	}
+}
+
+func (c *ClientLogic) handleDnsMsg(dns []byte) {
+	c.nicTool.SetPrimaryDnsServer(string(dns))
+	c.logView.Print(logview.LogInfo, fmt.Sprintf("set tun network card(%s) dns: %s\n", c.iFace.Name(), string(dns)))
 }

@@ -4,4 +4,5 @@ const (
 	routeMsg  = 0x00
 	dhcpMsg   = 0x01
 	packetMsg = 0x02
+	dnsMsg    = 0x03
 )
