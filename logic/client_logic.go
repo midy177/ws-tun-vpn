@@ -241,7 +241,7 @@ func (c *ClientLogic) handleRouteMsg(list []byte) {
 func (c *ClientLogic) handleDnsMsg(dns []byte) {
 	dnsIp := string(dns)
 	if net.ParseIP(dnsIp) != nil {
-		c.nicTool.SetPrimaryDnsServer(string(dnsIp))
+		c.nicTool.SetPrimaryDnsServer(dnsIp)
 		c.logView.Print(logview.LogInfo, fmt.Sprintf("set tun network card(%s) dns: %s\n", c.iFace.Name(), string(dns)))
 	}
 }
