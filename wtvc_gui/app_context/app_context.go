@@ -12,6 +12,7 @@ const (
 	AddConfigPage    NavEventType = 0x02
 	ModifyConfigPage NavEventType = 0x03
 	ConnectTo        NavEventType = 0x04
+	PrivilegePage    NavEventType = 0x05
 )
 
 type NavEventType rune

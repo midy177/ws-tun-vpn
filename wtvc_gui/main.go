@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
+	"ws-tun-vpn/pkg/privilege"
 	"ws-tun-vpn/wtvc_gui/app_context"
 	"ws-tun-vpn/wtvc_gui/ico"
 	"ws-tun-vpn/wtvc_gui/pages"
@@ -12,7 +14,18 @@ import (
 )
 
 func main() {
-	//privilege()
+	p := privilege.New()
+	if p.IsAdmin() {
+		RunApp()
+	} else {
+		err := p.Elevate()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
+func RunApp() {
 	a := app.NewWithID("com.wtv.c")
 	if meta := a.Metadata(); meta.Name == "" {
 		// App not packaged, probably from `go run`.
@@ -56,18 +69,3 @@ func main() {
 	w.SetFixedSize(false)
 	w.ShowAndRun()
 }
-
-//func privilege() {
-//	// 使用 sudo 命令以管理员权限重新启动当前进程
-//	cmd := exec.Command("sudo", os.Args[0])
-//	cmd.Stdout = os.Stdout
-//	cmd.Stdin = os.Stdin
-//	cmd.Stderr = os.Stderr
-//	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-//
-//	err := cmd.Run()
-//	if err != nil {
-//		fmt.Println("Failed to restart process with elevated privileges:", err)
-//		return
-//	}
-//}

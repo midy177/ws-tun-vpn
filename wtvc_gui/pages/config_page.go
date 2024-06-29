@@ -46,6 +46,7 @@ func MakeConfigsPage(ctx *app_context.AppContext, isAdd bool) fyne.CanvasObject 
 	)
 	cfgName := widget.NewEntry()
 	cfgName.SetPlaceHolder("例如: 北京集群")
+
 	serverUrl := widget.NewEntry()
 	serverUrl.SetPlaceHolder("输入连接地址,如:yeastar.com:8080")
 

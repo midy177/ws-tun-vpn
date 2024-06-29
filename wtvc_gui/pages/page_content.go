@@ -21,6 +21,9 @@ func MakePageContentLoop(ctx *app_context.AppContext) {
 		case app_context.ConnectTo:
 			ctx.Window.SetContent(container.NewPadded(MakeConnectPage(ctx)))
 			ctx.Window.Resize(fyne.NewSize(500, 400))
+			//case app_context.PrivilegePage:
+			//	ctx.Window.SetContent(container.NewPadded(MakePrivilegePage(ctx)))
+			//	ctx.Window.Resize(fyne.NewSize(500, 100))
 		}
 	}
 }
