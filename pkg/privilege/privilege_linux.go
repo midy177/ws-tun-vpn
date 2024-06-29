@@ -13,10 +13,8 @@ func (p privilege) IsAdmin() bool {
 }
 
 func (p privilege) Elevate() error {
-	args := []string{}
-	args = append(os.Args, string(os.Getpid()))
 	// 使用 Polkit 工具 pkexec 来请求授权
-	cmd := exec.Command("pkexec", args)
+	cmd := exec.Command("pkexec", os.Args)
 	// 执行命令
-	return cmd.Run()
+	return cmd.Start()
 }
