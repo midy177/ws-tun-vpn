@@ -21,6 +21,7 @@ func (p privilege) Elevate() error {
 	if len(os.Args) > 1 {
 		args = os.Args[1:]
 	}
+	args = append(args, string(os.Getpid()))
 	// 准备执行的命令
 	cmd := exec.Command(os.Args[0], args...)
 

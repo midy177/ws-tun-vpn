@@ -6,6 +6,10 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
+	"os"
+	"strconv"
+	"syscall"
+	"time"
 	"ws-tun-vpn/pkg/privilege"
 	"ws-tun-vpn/wtvc_gui/app_context"
 	"ws-tun-vpn/wtvc_gui/ico"
@@ -16,12 +20,22 @@ import (
 func main() {
 	p := privilege.New()
 	if p.IsAdmin() {
+		length := len(os.Args)
+		pid, err := strconv.Atoi(os.Args[length-1])
+		if err == nil {
+			if err := syscall.Kill(pid, syscall.SIGHUP); err != nil {
+				fmt.Printf("Failed to send SIGHUP: %v\n", err)
+				os.Exit(1)
+			}
+		}
 		RunApp()
 	} else {
 		err := p.Elevate()
 		if err != nil {
 			fmt.Println(err)
 		}
+		time.Sleep(time.Second * 30)
+		os.Exit(0)
 	}
 }
 

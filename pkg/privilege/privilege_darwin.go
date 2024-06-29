@@ -19,10 +19,12 @@ func (p privilege) Elevate() error {
 	if os.Geteuid() == 0 {
 		return nil
 	}
+
 	// 组装 AppleScript
-	script := fmt.Sprintf(`do shell script "sudo %s" with administrator privileges`, strings.Join(os.Args[0:], " "))
+	script := fmt.Sprintf(`do shell script "sudo %s %d" with administrator privileges`,
+		strings.Join(os.Args[0:], " "), os.Getpid())
 
 	// 构建执行 AppleScript 的命令
 	cmd := exec.Command("osascript", "-e", script)
-	return cmd.Run()
+	return cmd.Start()
 }
