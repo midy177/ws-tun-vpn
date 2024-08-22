@@ -170,7 +170,7 @@ func (c *ClientLogic) receiveLoop() error {
 				c.handleDnsMsg(data[1:])
 			default:
 				c.logView.Print(logview.LogError, fmt.Sprintf("unknown message type: %v", data[0]))
-				return errors.New(fmt.Sprintf("unknown message type: %v", data[0]))
+				//return errors.New(fmt.Sprintf("unknown message type: %v", data[0]))
 			}
 		}
 	}
