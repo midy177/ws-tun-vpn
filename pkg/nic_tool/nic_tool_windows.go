@@ -4,7 +4,11 @@
 package nic_tool
 
 import (
+	"golang.org/x/sys/windows"
+	"golang.zx2c4.com/wireguard/windows/tunnel/winipcfg"
+	"net/netip"
 	"strconv"
+	"syscall"
 	"ws-tun-vpn/pkg/util"
 )
 
@@ -23,9 +27,26 @@ func (t *tool) SetMtu() string {
 // SetRoute set the route for the tun device,set the distributed cidr and parse the cidr to get
 // the first address as the tun device gateway and set the metric to 6
 func (t *tool) SetRoute(cidr string) string {
-	ipAddr, mask := util.CidrToIPNetAndMask(cidr)
+	//ipAddr, mask := util.CidrToIPNetAndMask(cidr)
 	gatewayAddr, _ := util.CidrAddrToIPAddrAndMask(t.cidr)
-	return execCmd("cmd", "/C", "route", "add", ipAddr, "mask", mask, gatewayAddr, "metric", "6")
+
+	dev := t.iFac.GetDev()
+	if dev == nil {
+		return "获取设备失败"
+	}
+	nextHop, err := netip.ParseAddr(gatewayAddr)
+	if err != nil {
+		return err.Error()
+	}
+
+	link := winipcfg.LUID(dev.LUID())
+
+	err = link.AddRoute(netip.MustParsePrefix(cidr), nextHop, 6)
+	if err != nil {
+		return err.Error()
+	}
+	return "add route success"
+	//return execCmd("cmd", "/C", "route", "add", ipAddr, "mask", mask, gatewayAddr, "metric", "6")
 }
 
 // Enable IP forwarding
@@ -45,5 +66,23 @@ func (t *tool) DisableNat() string {
 }
 
 func (t *tool) SetPrimaryDnsServer(dns string) string {
-	return execCmd("netsh", "interface", "ipv4", "set", "dnsservers", t.tunName, "static", dns, "primary")
+	dev := t.iFac.GetDev()
+	if dev == nil {
+		return "获取设备失败"
+	}
+	link := winipcfg.LUID(dev.LUID())
+	err := link.FlushDNS(syscall.AF_INET)
+	if err != nil {
+		return err.Error()
+	}
+	ns, err := netip.ParseAddr(dns)
+	if err != nil {
+		return err.Error()
+	}
+	domains := []string{"wintun.dns"}
+	err = link.SetDNS(windows.AF_INET, []netip.Addr{ns}, domains)
+	if err != nil {
+		return err.Error()
+	}
+	return "change dns success"
 }

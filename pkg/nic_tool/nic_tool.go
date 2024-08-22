@@ -4,6 +4,7 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"ws-tun-vpn/pkg/water"
 )
 
 type NicTool interface {
@@ -16,13 +17,14 @@ type NicTool interface {
 }
 
 type tool struct {
+	iFac    *water.Interface
 	tunName string
 	cidr    string
 	mtu     int
 }
 
-func NewNicTool(tunName, cidr string, mtu int) NicTool {
-	return &tool{tunName: tunName, cidr: cidr, mtu: mtu}
+func NewNicTool(ifac *water.Interface, tunName, cidr string, mtu int) NicTool {
+	return &tool{iFac: ifac, tunName: tunName, cidr: cidr, mtu: mtu}
 }
 
 // execCmd executes the given command

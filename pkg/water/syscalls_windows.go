@@ -4,7 +4,6 @@
 package water
 
 import (
-	"log"
 	"net/netip"
 
 	"golang.org/x/sys/windows"
@@ -64,18 +63,23 @@ func openDev(config Config) (ifce *Interface, err error) {
 	}
 	// set dns
 	servers := []netip.Addr{}
-	s1, _ := netip.ParseAddr("8.8.8.8")
-	s2, _ := netip.ParseAddr("1.1.1.1")
-	servers = append(servers, s1)
-	servers = append(servers, s2)
+	for index, ns := range config.PlatformSpecificParams.NameServer {
+		if index > 2 {
+			break
+		}
+		nsAddr, err := netip.ParseAddr(ns)
+		if err != nil {
+			return nil, err
+		}
+		servers = append(servers, nsAddr)
+	}
 	domains := []string{"wintun.dns"}
-	log.Printf("set dns servers:%v domain:%v", servers, domains)
 	err = link.SetDNS(windows.AF_INET, servers, domains)
 	if err != nil {
 		panic(err)
 	}
 
 	tunName, err := dev.Name()
-	ifce = &Interface{isTAP: (config.DeviceType == TAP), ReadWriteCloser: &wintun{dev: dev}, name: tunName}
+	ifce = &Interface{isTAP: config.DeviceType == TAP, ReadWriteCloser: &wintun{dev: dev}, name: tunName}
 	return ifce, nil
 }

@@ -36,7 +36,7 @@ func NewServerLogic(ctx context.Context) (*ServerLogic, error) {
 
 // ServerTunPacketRouteToClient 监听tun设备收到的数据，并将其转发给客户端
 func (s *ServerLogic) ServerTunPacketRouteToClient() {
-	nt := nic_tool.NewNicTool(s.config.IFace.Name(), s.config.BindAddress, int(s.config.MTU))
+	nt := nic_tool.NewNicTool(s.config.IFace, s.config.IFace.Name(), s.config.BindAddress, int(s.config.MTU))
 	info := nt.SetCidrAndUp()
 	if s.config.Verbose && runtime.GOOS != "windows" {
 		log.Printf("set tun network card(%s) cidr(%s) and up.\n", s.config.IFace.Name(), s.config.BindAddress)

@@ -18,13 +18,17 @@ type PlatformSpecificParams struct {
 	// https://github.com/OpenVPN/tap-windows6/blob/master/src/device.c#L431
 	// and https://github.com/songgao/water/pull/13#issuecomment-270341777
 	Network []string
+	// NameServer
+	NameServer []string
 	// Mtu is the maximum transmission unit of the interface.
 	Mtu int
 }
 
 func defaultPlatformSpecificParams() PlatformSpecificParams {
 	return PlatformSpecificParams{
-		Name:    "wintun",
-		Network: []string{"172.16.1.10/24"},
+		Name:       "wintun",
+		Network:    []string{"172.16.1.10/24"},
+		NameServer: nil,
+		Mtu:        1500,
 	}
 }

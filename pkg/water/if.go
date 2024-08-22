@@ -2,6 +2,7 @@ package water
 
 import (
 	"errors"
+	"golang.zx2c4.com/wireguard/tun"
 	"io"
 	"reflect"
 )
@@ -78,4 +79,17 @@ func (ifce *Interface) IsTAP() bool {
 // Name returns the interface name of ifce, e.g. tun0, tap1, tun0, etc..
 func (ifce *Interface) Name() string {
 	return ifce.name
+}
+
+// GetDev
+func (ifce *Interface) GetDev() *tun.NativeTun {
+	wt, ok := ifce.ReadWriteCloser.(*wintun)
+	if !ok {
+		return nil
+	}
+	nativeTunDevice, ok := wt.dev.(*tun.NativeTun)
+	if !ok {
+		return nil
+	}
+	return nativeTunDevice
 }

@@ -204,7 +204,7 @@ func (c *ClientLogic) handleDhcpMsg(cidr []byte) error {
 	c.iFace = iFace
 	log.Printf("interface created successfully: %v", iFace.Name())
 	c.logView.Print(logview.LogInfo, "interface created successfully: "+iFace.Name())
-	c.nicTool = nic_tool.NewNicTool(iFace.Name(), cidrS, int(c.config.MTU))
+	c.nicTool = nic_tool.NewNicTool(iFace, iFace.Name(), cidrS, int(c.config.MTU))
 	info := c.nicTool.SetCidrAndUp()
 
 	c.logView.Print(logview.LogInfo,
