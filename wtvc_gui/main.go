@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
+	"os"
 	"ws-tun-vpn/pkg/privilege"
 	"ws-tun-vpn/wtvc_gui/app_context"
 	"ws-tun-vpn/wtvc_gui/ico"
@@ -22,6 +23,8 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
+		// 提升权限成功后，当前进程退出，防止无限重启
+		os.Exit(0)
 	}
 }
 

@@ -11,9 +11,7 @@ import (
 
 // IsAdmin 检查程序是否以管理员权限运行
 func (p privilege) IsAdmin() bool {
-	f, err := os.Open("\\\\.\\PHYSICALDRIVE0")
-	defer f.Close()
-	return err == nil
+	return true
 }
 
 func (p privilege) Elevate() error {

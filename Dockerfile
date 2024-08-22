@@ -1,4 +1,4 @@
-FROM golang:1.23.0-alpine3.20 as builder
+FROM golang:1.23.0-alpine3.20 AS builder
 
 # Define the project name | 定义项目名称
 
@@ -16,7 +16,7 @@ RUN go env -w GO111MODULE=on \
     -o wtvs server/cmd.go
 
 #linux/amd64,linux/arm64
-FROM alpine:latest
+FROM alpine:3.20
 
 WORKDIR /app
 
