@@ -2,7 +2,7 @@
 OutFile "wtvc_gui_Installer.exe"
 
 # Define the directory where the application will be installed
-InstallDir $PROGRAMFILES\MyFyneApp
+InstallDir $PROGRAMFILES\WtvcApp
 
 # Request application privileges for Windows Vista/7/8/10
 RequestExecutionLevel user
@@ -19,10 +19,10 @@ Section "MainSection" SEC01
   File "wintun.dll"
 
   # Create a shortcut in the start menu
-  CreateShortcut "$SMPROGRAMS\MyFyneApp.lnk" "$INSTDIR\wtvc_gui.exe"
+  CreateShortcut "$SMPROGRAMS\wtvc_gui.lnk" "$INSTDIR\wtvc_gui.exe"
 
   # Create a shortcut on the desktop
-  CreateShortcut "$DESKTOP\MyFyneApp.lnk" "$INSTDIR\wtvc_gui.exe"
+  CreateShortcut "$DESKTOP\wtvc_gui.lnk" "$INSTDIR\wtvc_gui.exe"
 
 SectionEnd
 
@@ -34,8 +34,8 @@ Section "Uninstall"
   Delete "$INSTDIR\wintun.dll"
 
   # Remove shortcuts
-  Delete "$SMPROGRAMS\MyFyneApp.lnk"
-  Delete "$DESKTOP\MyFyneApp.lnk"
+  Delete "$SMPROGRAMS\wtvc_gui.lnk"
+  Delete "$DESKTOP\wtvc_gui.lnk"
 
   # Remove the installation directory
   RMDir "$INSTDIR"

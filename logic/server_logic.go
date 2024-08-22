@@ -151,11 +151,11 @@ func (s *ServerLogic) DistributeRote(client net.Conn) error {
 
 // DistributeDns 下发dns给客户端
 func (s *ServerLogic) DistributeDns(client net.Conn) error {
-	var buf bytes.Buffer
-	buf.WriteRune(dnsMsg)
-	if len(s.config.PushDns) == 0 {
+	if s.config.PushDns == "" {
 		return nil
 	}
+	var buf bytes.Buffer
+	buf.WriteRune(dnsMsg)
 	buf.WriteString(s.config.PushDns)
 	return wsutil.WriteServerBinary(client, buf.Bytes())
 }

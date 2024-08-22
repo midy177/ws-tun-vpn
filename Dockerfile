@@ -1,4 +1,4 @@
-FROM golang:1.22.2-alpine3.19 as builder
+FROM golang:1.23.0-alpine3.20 as builder
 
 # Define the project name | 定义项目名称
 
