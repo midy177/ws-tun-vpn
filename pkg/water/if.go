@@ -5,6 +5,7 @@ import (
 	"golang.zx2c4.com/wireguard/tun"
 	"io"
 	"reflect"
+	"runtime"
 )
 
 // Interface is a TUN/TAP interface.
@@ -83,6 +84,9 @@ func (ifce *Interface) Name() string {
 
 // GetDev
 func (ifce *Interface) GetDev() *tun.NativeTun {
+	if runtime.GOOS != "windows" {
+		return nil
+	}
 	wt, ok := ifce.ReadWriteCloser.(*wintun)
 	if !ok {
 		return nil

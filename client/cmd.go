@@ -1,12 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"fyne.io/fyne/v2"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"log"
+	"os"
+	"time"
+	"ws-tun-vpn/pkg/logview"
 	"ws-tun-vpn/pkg/util"
 	"ws-tun-vpn/service"
 	"ws-tun-vpn/types"
@@ -27,7 +33,17 @@ var rootCmd = &cobra.Command{
 			configStr, _ := jsoniter.MarshalToString(config)
 			fmt.Printf("push routes to client: %s\n", configStr)
 		}
-		return service.NewClientService(cmd.Context(), nil)
+		zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
+		lev, err := zerolog.ParseLevel(os.Getenv("LOG_LEVEL"))
+		if err != nil || lev == zerolog.NoLevel {
+			err = nil
+			lev = zerolog.InfoLevel
+		}
+		logger := zerolog.New(zerolog.ConsoleWriter{
+			Out:        os.Stdout,
+			TimeFormat: time.StampMilli,
+		}).With().Timestamp().Logger().Level(lev)
+		return service.NewClientService(cmd.Context(), &logV{&logger})
 	},
 }
 
@@ -48,4 +64,40 @@ func main() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatalln(err)
 	}
+}
+
+type logV struct {
+	*zerolog.Logger
+}
+
+func (l *logV) Print(level logview.LogLevel, log string) {
+	switch level {
+	case logview.LogError:
+		l.Error().Msg(log)
+	case logview.LogInfo:
+		l.Info().Msg(log)
+	case logview.LogDebug:
+		l.Debug().Msg(log)
+	case logview.LogWarm:
+		l.Warn().Msg(log)
+	case logview.LogVerbose:
+		l.Debug().Msg(log)
+	default:
+		l.Info().Msg(log)
+	}
+}
+
+func (l *logV) GetView() fyne.CanvasObject {
+	return nil
+}
+
+func (l *logV) SetLogLineSize(maxSize int) {
+	return
+}
+
+func (l *logV) GetText() *bytes.Buffer {
+	return nil
+}
+
+func (l *logV) Clear() {
 }

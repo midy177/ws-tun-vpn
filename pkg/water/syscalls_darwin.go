@@ -16,6 +16,9 @@ import (
 	"unsafe"
 )
 
+type wintun struct {
+}
+
 const appleUTUNCtl = "com.apple.net.utun_control"
 
 /*

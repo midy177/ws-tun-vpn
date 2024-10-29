@@ -4,6 +4,7 @@
 package water
 
 import (
+	"golang.zx2c4.com/wireguard/tun"
 	"os"
 	"strings"
 	"syscall"
@@ -16,6 +17,22 @@ const (
 	cIFFNOPI       = 0x1000
 	cIFFMULTIQUEUE = 0x0100
 )
+
+type wintun struct {
+	dev tun.Device
+}
+
+func (w *wintun) Close() error {
+	return w.dev.Close()
+}
+
+func (w *wintun) Write(b []byte) (int, error) {
+	return w.dev.Write(b, 0)
+}
+
+func (w *wintun) Read(b []byte) (int, error) {
+	return w.dev.Read(b, 0)
+}
 
 type ifReq struct {
 	Name  [0x10]byte
